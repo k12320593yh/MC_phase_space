@@ -57,7 +57,7 @@ def test_amplitude_3():
 
 def eenunugamma(vectors, mz=91.2, p=None,masses=[0,0,0]):
     p = np.vstack((np.array([[0,0,0,0],[250,0,0,250],[250,0,0,-250]]),vectors))
-    print(p)
+    # print(p)
     coefficient = e**2*gz**4
     b = (16*lt.fcc(p[1],p[5])*lt.fcc(p[2],p[5])*(mz**2-2*(lt.fcc(p[3],p[4])))**2)
     a = (4*tw**2*lt.fcc(p[1],p[3])*lt.fcc(p[1],p[5])*lt.fcc(p[2],p[4])-
@@ -75,8 +75,8 @@ def eenunugamma(vectors, mz=91.2, p=None,masses=[0,0,0]):
          (4*tw+1)*lt.fcc(p[1],p[3])*lt.fcc(p[1],p[5])*lt.fcc(p[4],p[5])+4*tw**2*(lt.fcc(p[2],p[4])*lt.fcc(p[2],p[5])*lt.fcc(p[3],p[5])+
          lt.fcc(p[2],p[3])*lt.fcc(p[2],p[5])*lt.fcc(p[4],p[5]))-
          (4*tw-1)*lt.fcc(p[2],p[4])*lt.fcc(p[2],p[5])*lt.fcc(p[3],p[5]))
-    print(a)
-    print(b)
+    # print(a)
+    # print(b)
     return coefficient*a/b
 
 def eemumu(vectors,masses=[0,0]):
@@ -122,4 +122,4 @@ def eemumu(vectors,masses=[0,0]):
 
 
 
-print(mc.phase_space_integration(eemumu,number_of_dots=10000,masses=[0,0,0],dimension=2))
+print(mc.phase_space_integration(eenunugamma,number_of_dots=10000,masses=[0,0,0],dimension=3))

@@ -2,11 +2,23 @@ import numpy as np
 import LorentzGenerators as lg
 import scipy.linalg as sp
 
+
 #A general Lorentz 4 vector. Just what you learned in peskin.
 class LorentzObject(object):
     def __init__(self,order):
         self.order = order
 
+
+class GammaMatrices(object):
+    def __init__(self,index):
+        self.index = index
+        self.shape = (4,4,4)
+
+class MinkowskiMetric(LorentzObject):
+    def __init__(self,indices):
+        LorentzObject.__init__(self,order=2)
+        self.indices = indices
+        self.componets = lg.minkowski_metric
 
 class Lorentz4vector(LorentzObject):
     def __init__(self,components,mass = None,name = 'nothing',index_name = 'mu'):
@@ -32,12 +44,30 @@ class Lorentz4vector(LorentzObject):
         self.__mag = np.sqrt(self.__components[0]**2-fcc(self.__components,self.__components))
         self.p3 = self.__components[1:]
         self.e = self.__components[0]
+        self.shape = self.__components.shape
         a = 0
         for i in range(3):
             a+=self.p3[i]**2
         self.p3norm = np.sqrt(a)
     def get_4_vector(self):
         return np.array(self.__components)
+
+    def __add__(self, other):
+        if isinstance(other,Lorentz4vector):
+            return Lorentz4vector(components=self.__components+other.get_4_vector())
+        else:
+            return np.array(self.__components+other)
+
+    def __mul__(self, other):
+        if isinstance(other,Lorentz4vector):
+            if self.index_name == other.index_name:
+                return fcc(self.__components,other.__components)
+            else:
+                return
+        elif other.shape == (4,):
+            return fcc(self.__components,other)
+        elif isinstance(other,GammaMatrices):
+            return Slashed_Momentum(self.__components)
 
     def sh(self,message=''):
         print(message+': '+str(self.__components))
@@ -104,9 +134,21 @@ class Lorentz4vector(LorentzObject):
     def get_mag(self):
         return self.__mag
 
+    def slashed(self):
+        return Slashed_Momentum(self.__components)
 
-    # def get_indice(self):
-    #     pass
+
+
+
+class Slashed_Momentum(object):
+    def __init__(self,momentum):
+        if isinstance(momentum,Lorentz4vector):
+            p = momentum.get_4_vector()
+        else:
+            p = momentum
+        self.matrix = p[0]*lg.gamma_0 - np.sum(p[i]*lg.gamma_matrices[i] for i in range(1,4))
+
+
 
 
 class Lorentz_order_2_tensor(LorentzObject):
@@ -168,9 +210,12 @@ class Lorentz_HD_tensor(object):
 #whose keys are the index names and values binary tuples, 1st component being the location while the second being
 #the case.
     def __init__(self,name = 'HDtensor',components = lg.minkowski_metric,names = ['mu','nu'],cases = [True,True]):
+        for i in components.shape:
+            if i != 4:
+                raise TypeError("Wrong shape of tensor to initialise a Lorentz object")
         self.components = components
-        if (len(names) != len(cases)) or len(names) != len(components.shape) or len(cases) != len(components.shape):
-            raise TypeError("Tensor dimensionality does not match number of indices.")
+        # if (len(names) != len(cases)) or len(names) != len(components.shape) or len(cases) != len(components.shape):
+        #     raise TypeError("Tensor dimensionality does not match number of indices.")
         indices = []
         for i in range(len(names)):
             indices.append((names[i],[i,cases[i]]))
@@ -344,3 +389,15 @@ class LorentzTransFormation(object):
     def set_matrix_form(self,matrix):
         self.__matrix_form = matrix
 
+
+def gamma_matrices_trace_generator(number):
+    if number == 2:
+        return
+
+ga_mu = GammaMatrices(index='mu')
+p0 = Lorentz4vector(components=[4,3,2,1])
+ps = p0.slashed()
+print((p0*ga_mu).matrix)
+print(ps.matrix)
+print(np.trace(ps.matrix))
+print(p0*p0)

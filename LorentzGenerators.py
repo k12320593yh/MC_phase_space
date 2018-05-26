@@ -25,7 +25,9 @@ gamma_0 = np.array([[0,0,1,0],[0,0,0,1],[1,0,0,0],[0,1,0,0]])
 gamma_1 = np.array([[0,0,0,1],[0,0,1,0],[0,-1,0,0],[-1,0,0,0]])
 gamma_2 = np.array([[0,0,0,-1j],[0,0,1j,0],[0,1j,0,0],[-1j,0,0,0]])
 gamma_3 = np.array([[0,0,1,0],[0,0,0,-1],[-1,0,0,0],[0,1,0,0]])
-gamma_matrices = gamma_0,gamma_1,gamma_2,gamma_3
+gamma_matrices = np.array([gamma_0,gamma_1,gamma_2,gamma_3])
+# print(gamma_matrices[3])
+
 # for i in range(4):
 #     print(gamma_matrices[i])
 # print(gamma_2.imag)

@@ -224,6 +224,7 @@ def two_three_phase_space_dot(s_sqrt,masses):
     return Event(vectors=np.array([p_1.get_4_vector(),p_2.get_4_vector(),p_3.get_4_vector()]),
                  weight=weight,final_state_particles=3)
 
+
 # two_three_phase_space_dot(s_sqrt=500,masses=[0,0,0])
 
 #This function extracts what is necessary from the final state particle momentums.
