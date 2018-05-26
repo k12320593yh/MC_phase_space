@@ -2,7 +2,7 @@ import numpy as np
 import inspect as insp
 import Lorentz_Transformation as lt
 import scipy.linalg as sp
-
+# np.random.seed(7)
 def test_function_0(r,t,p):
     return (r**2)*np.sin(t)
 
@@ -66,9 +66,10 @@ def MCI_MD(function,bound,number_of_points=100000):
 #massess: 3, ndarry. Masses of final state particles.
 #bound: phase space integration bound.
 class Event(object):
-    def __init__(self,vectors,weight):
+    def __init__(self,vectors,weight,final_state_particles):
         self.__vectors = vectors
         self.__weight = weight
+        self.number = final_state_particles
 
     def get_vector(self):
         return self.__vectors
@@ -76,27 +77,57 @@ class Event(object):
     def get_weight(self):
         return self.__weight
 
-def two_three_phase_space_dot(momentum_0,momentum_1,masses):
+#Naive Case
+def two_two_phase_space_dot(s_sqrt,masses):
+    raw_dot = np.random.rand(2,)
+    momentum = lt.Lorentz4vector(components=[s_sqrt,0,0,0])
+    p_1 = lt.Lorentz4vector(components=[s_sqrt/2,0,0,s_sqrt/2])
+    # momentum.lorentz_rot_toz()
+    momentum.zrapidity()
+    # momentum.z_boost_to_rest_frame()
+    mass_0 = momentum.get_4_vector()[0]
+    s = lt.four_vector_contraction(momentum,momentum)
+    E_1 = (mass_0**2+masses[0]**2-masses[1]**2)/(2*mass_0)
+    p_3_mag = np.sqrt(E_1 ** 2 - masses[0] ** 2)
+
+    p_3 = lt.Lorentz4vector(components=[E_1,0,0,p_3_mag],mass=masses[0])
+    p_4 = lt.Lorentz4vector(components=momentum.get_4_vector()-p_3.get_4_vector(),mass=masses[1])
+    random_theta_rot_0 = lt.general_matrix_form(parameter=[0,np.arccos(raw_dot[0]),0,0,0,0])
+    # print(random_theta_rot_0)
+    random_phi_theta_rot_0 = np.matmul(lt.general_matrix_form(parameter=[0,0,raw_dot[1]*(2*np.pi),0,0,0]),random_theta_rot_0)
+    # print(random_phi_theta_rot_0)
+    # print(p_3.get_4_vector())
+    p_3.lorentz_transformation_off_matrix(random_phi_theta_rot_0)
+    p_4.lorentz_transformation_off_matrix(random_phi_theta_rot_0)
+    # p_3.sh()
+    # print(np.matmul(random_phi_theta_rot_0,p_3.get_4_vector()))
+    weight= (1/(64*(np.pi**2)*s))*(p_3.get_mag()/p_1.get_mag())
+    # print(weight)
+
+    return Event(vectors=np.array([p_3.get_4_vector(), p_4.get_4_vector()]),weight=weight,final_state_particles=2)
+
+two_two_phase_space_dot(s_sqrt=500,masses=[0,0])
+
+
+
+def two_three_phase_space_dot(s_sqrt,masses):
 #All final state particles must be on shell hence there're 3n-4 free variable to be integrated over. In our case,
 #it's 5.
     raw_dot = np.random.rand(5,)
-    print(raw_dot)
-    momentum = lt.four_vector_add(momentum_0,momentum_1)
-    momentum.lorentz_rot_toz()
+    momentum = lt.Lorentz4vector(components=[s_sqrt,0,0,0])
+    # momentum.lorentz_rot_toz()
     momentum.zrapidity()
-    momentum.z_boost_to_rest_frame()
+    # momentum.z_boost_to_rest_frame()
     #s in Mandelstam variables.
     mass_0 = momentum.get_4_vector()[0]
     s = lt.four_vector_contraction(momentum,momentum)
-    # print(s)
-    s_sqrt = np.sqrt(s)
-    # print(s_sqrt)
     if s_sqrt - np.sum(masses) < 0:
         print('Impossible process: energy conservation violation detected!')
         return None
 
     #determine how much energy is carried away by the first particle. Have to save enough for the next two!
     mediate_virtual_particle_mass = raw_dot[0]*(s_sqrt-np.sum(masses))+masses[1]+masses[2]
+    # print(mediate_virtual_particle_mass)
     # print(mediate_virtual_particle_mass)
     #After the mediator mass is determined, |p1| is determined as well:
 
@@ -107,34 +138,93 @@ def two_three_phase_space_dot(momentum_0,momentum_1,masses):
     random_theta_rot_0 = lt.general_matrix_form(parameter=[0,np.arccos(raw_dot[1]),0,0,0,0])
     random_phi_theta_rot_0 = np.matmul(lt.general_matrix_form(parameter=[0,0,raw_dot[2]*(2*np.pi),0,0,0]),random_theta_rot_0)
 
+    # theta_0_inverse = lt.general_matrix_form(parameter=[0,-np.arccos(raw_dot[1]),0,0,0,0])
+    # phi_0_inverse = lt.general_matrix_form(parameter=[0,0,-raw_dot[2]*(2*np.pi),0,0,0])
     #Generate final state particle 1
+
     p_1 = lt.Lorentz4vector(name='final state particle 1',components=[E_1,0,0,p_1_mag],mass=masses[0])
+
+
+    p_mediator = lt.Lorentz4vector(name='mediator particle',
+                                         components=momentum.get_4_vector() - p_1.get_4_vector(),
+                                         mass=mediate_virtual_particle_mass)
+    # p_1_z = lt.Lorentz4vector(components=p_1.get_4_vector(),mass=p_1.get_mass())
+    p_mediator_duplicate = lt.Lorentz4vector(name='mediator particle',
+                                             components=momentum.get_4_vector()-p_1.get_4_vector(),
+                                             mass=mediate_virtual_particle_mass)
+    p_mediator.lorentz_transformation_off_matrix(random_phi_theta_rot_0)
+    # print(p_mediator.get_4_vector())
+    # p_1.sh(message='p_1 before rotation 0')
     p_1.lorentz_transformation_off_matrix(random_phi_theta_rot_0)
+    # print("p_1 after rotation: " + str(p_1.get_4_vector()))
+    # print(p_1.get_4_vector()+p_mediator.get_4_vector())
+    #For now, the decay of original particle in to p1 and virtual particle conserves four momentum.
 
-    weight = p_1_mag/s_sqrt
+    # p_mediator_duplicate.lorentz_transformation_off_matrix(random_phi_theta_rot_0)
+    # print(p_mediator_duplicate.get_4_vector())
+    # So far so good.
+    p_mediator_duplicate.zrapidity()
+    p_mediator_duplicate.z_boost_to_rest_frame()
+    # p_mediator_duplicate.sh()
+    # print(p_mediator_duplicate.get_4_vector())
     # Reproduce last step and generate the next two. p_mediator is the new momentum l4v.
-    p_mediator = lt.Lorentz4vector(name='mediator particle',components=momentum.get_4_vector()-p_1.get_4_vector(),mass=mediate_virtual_particle_mass)
+    decay_1_axial_rapidity = p_mediator_duplicate.get_zrapidity()
+    decay_1_global_boost = lt.boost_matrix(rapidities=[0,0,decay_1_axial_rapidity])
+    # p_mediator_duplicate.lorentz_transformation_off_matrix(decay_1_global_boost)
+    # print(p_mediator_duplicate.get_4_vector())
+    # decay_1_global_boost works as expected.
+    # For now, p_mediator is in its rest frame.
 
-    #lt the mediator 4momemtum into rest fram at convenience of calulate next two particles.
+    ##############################
+
+    #No Problem above this line.
+
+    ##############################
+
+    # And that is where the next pair of particles are generated.
     E_2 = (mediate_virtual_particle_mass**2+masses[1]**2-masses[2]**2)/(2*mediate_virtual_particle_mass)
-
-    # E_2 = p_mediator.get_4_vector()[0]
     p_2_mag = np.sqrt(E_2**2 - masses[1]**2)
 
+    #Generate random angle to rotate the second pair of particle.
     random_theta_rot_1 = lt.general_matrix_form(parameter=[0,np.arccos(raw_dot[3]),0,0,0,0])
     random_phi_theta_rot_1 = np.matmul(lt.general_matrix_form(parameter=[0,0,raw_dot[4]*(2*np.pi),0,0,0]),random_theta_rot_1)
 
+    # print(p_mediator_duplicate.get_4_vector()[0])
+    # p_mediator_duplicate.sh('p_mediator in its reste frame')
     p_2 = lt.Lorentz4vector(name='final state particle 2',components=[E_2,0,0,p_2_mag],mass=masses[1])
+    p_3 = lt.Lorentz4vector(name='final state particle 3',components=p_mediator_duplicate.get_4_vector() - p_2.get_4_vector(), mass=masses[2])
+    # print(p_2.get_4_vector()+p_3.get_4_vector())
+    # print(p_2.get_4_vector())
+    # print(p_3.get_4_vector())
     p_2.lorentz_transformation_off_matrix(random_phi_theta_rot_1)
+    p_3.lorentz_transformation_off_matrix(random_phi_theta_rot_1)
+    p_2.lorentz_transformation_off_matrix(decay_1_global_boost)
+    p_3.lorentz_transformation_off_matrix(decay_1_global_boost)
+    # print(p_2.get_4_vector()+p_3.get_4_vector())
+    # print(p_2.get_4_vector())
+    # print(p_3.get_4_vector())
 
-    p_3 = lt.Lorentz4vector(name='final state particle 3',components=p_mediator.get_4_vector()-p_2.get_4_vector(),mass=masses[2])
 
-    weight *= mediate_virtual_particle_mass/p_2_mag
+    #Rotate the decay 2 products according to a second set of random numbers.
 
-    return Event(vectors=np.array([momentum_0.get_4_vector(),momentum_1.get_4_vector(),p_1.get_4_vector(),p_2.get_4_vector(),p_3.get_4_vector()]),
-                 weight=weight)
+    p_2.lorentz_transformation_off_matrix(random_phi_theta_rot_0)
 
+    p_3.lorentz_transformation_off_matrix(random_phi_theta_rot_0)
 
+    #Let's briefly recap this:
+    #Generate a 1->2 decay event invovling a stationary particle with four momentum (sqrt(s),0,0,0), final state particle
+    #and a virtual
+    # print(p_3.get_mass())
+    # print(p_1.get_4_vector())
+    # print(p_2.get_4_vector())
+    # print(p_3.get_4_vector())
+    # print(p_3.get_4_vector()+p_2.get_4_vector()+p_1.get_4_vector())
+
+    weight = 1/((4*np.pi)**5*(s_sqrt/2)**2*p_1.e*p_2.e*p_3.e)
+    return Event(vectors=np.array([p_1.get_4_vector(),p_2.get_4_vector(),p_3.get_4_vector()]),
+                 weight=weight,final_state_particles=3)
+
+# two_three_phase_space_dot(s_sqrt=500,masses=[0,0,0])
 
 #This function extracts what is necessary from the final state particle momentums.
 #M_square is Lorentz invariant, hence it only depends on the contraction of five ps.
@@ -143,16 +233,38 @@ def two_three_phase_space_dot(momentum_0,momentum_1,masses):
 
 #M_square must be a function of p1,p2 and p3.
 #If not, then it will not be Lorentz invariable.
-def MC_23_phase_space_integration(M_square,number_of_dots,s_sqrt):
+
+class Amplitude(object):
+    def __init__(self,function,dimension):
+        self.function = function
+        self.dimension = dimension
+
+
+def phase_space_integration(function,number_of_dots=100,s_sqrt=500,masses=[0,0,0],dimension=2):
     summ = 0
     total_space = 0
+    # count = 0
     momentum = lt.Lorentz4vector(components=[s_sqrt,0,0,0],name='decaying mediator',mass=s_sqrt)
+    M_square = Amplitude(function=function,dimension=dimension)
     for i in range(number_of_dots):
-        phase_space_dot = two_three_phase_space_dot(momentum,s_sqrt)
-        summ += M_square(*phase_space_dot.get_vector())*phase_space_dot[-1]
-        total_space += phase_space_dot[-1]
+        if dimension == 3:
+            phase_space_dot = two_three_phase_space_dot(s_sqrt=s_sqrt, masses=masses)
+            a = M_square.function(vectors=phase_space_dot.get_vector(),
+                                      masses=masses) * phase_space_dot.get_weight()
+            summ += a
+            total_space += phase_space_dot.get_weight()
+            # count+=1
 
-    return summ/total_space
+        elif dimension == 2:
+            phase_space_dot = two_two_phase_space_dot(s_sqrt=s_sqrt,masses=masses)
+            a = M_square.function(vectors=phase_space_dot.get_vector(),
+                                      masses=masses) * phase_space_dot.get_weight()
+            summ += a
+            total_space += phase_space_dot.get_weight()
+            # print(a)
+            # count+=1
+
+    return summ/number_of_dots
 
 
 #see if the processes is allowed by 4-momen

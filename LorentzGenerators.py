@@ -21,5 +21,13 @@ lorentz_generators[4] = boost_1
 lorentz_generators[5] = boost_2
 lorentz_generators[6] = boost_3
 lorentz_generators = np.array(lorentz_generators)
-# for i in range(7):
+gamma_0 = np.array([[0,0,1,0],[0,0,0,1],[1,0,0,0],[0,1,0,0]])
+gamma_1 = np.array([[0,0,0,1],[0,0,1,0],[0,-1,0,0],[-1,0,0,0]])
+gamma_2 = np.array([[0,0,0,-1j],[0,0,1j,0],[0,1j,0,0],[-1j,0,0,0]])
+gamma_3 = np.array([[0,0,1,0],[0,0,0,-1],[-1,0,0,0],[0,1,0,0]])
+gamma_matrices = gamma_0,gamma_1,gamma_2,gamma_3
+# for i in range(4):
+#     print(gamma_matrices[i])
+# print(gamma_2.imag)
+# # for i in range(7):
 #     print(lorentz_generators[i])

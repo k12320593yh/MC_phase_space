@@ -1,3 +1,17 @@
+0.5
+--two_three_phase_space_dot now takes s_sqrt as an argument, rather than sily momentum0 and momentum1.
+
+0.4:
+--l4v.zprapidity can now correctly reconise negative rapidity.
+
+
+0.3:
+--L4V.lorentz_transformation is modified so that user can choose between two modes: mode0 that changes the original 4 vector's components,
+and mode1 that genertaes a new l4v object with the transformed components and same mass.
+--L4V now has a new attribute dedicated to record its orginal four components. Initialised in __init__.
+--Fixed some minor bugs
+
+
 0.2:
 --Fixed bugs in .lorentz_rot_toz() and .z_boost_to_rest_frame(). Now these features should work fine.
 
