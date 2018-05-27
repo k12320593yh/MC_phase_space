@@ -122,4 +122,4 @@ def eemumu(vectors,masses=[0,0]):
 
 
 
-print(mc.phase_space_integration(eenunugamma,number_of_dots=10000,masses=[0,0,0],dimension=3))
+print(mc.phase_space_integration(eemumu,number_of_dots=10000,masses=[0,0,0],dimension=2))

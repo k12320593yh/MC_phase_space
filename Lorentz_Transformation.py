@@ -5,8 +5,37 @@ import scipy.linalg as sp
 
 #A general Lorentz 4 vector. Just what you learned in peskin.
 class LorentzObject(object):
-    def __init__(self,order):
-        self.order = order
+    def __init__(self,components,indices):
+        self.order = len(indices)
+        self.components = components
+        self.indices = indices
+
+    # def __mul__(self, other):
+    #     contract(self, other)
+
+
+#This involves initialise and manipulate numpy ndarray with unknown shape
+#May simply not be the correct path. What about turn to symbolic, algebraic solution?
+
+
+# def contract(self, other):
+#     new_indices = []
+#     axis_to_be_contracted_over = []
+#     print(self.indices)
+#     print(other.indices)
+#     for i in self.indices:
+#         if i not in other.indices:
+#             new_indices.append(i)
+#         else:
+#             axis_to_be_contracted_over.append(i)
+#     for j in other.indices:
+#         if j not in self.indices:
+#             new_indices.append(j)
+
+
+
+test_tensor_1 = LorentzObject(components=np.random.rand(4,4,4),indices=['a','b','c'])
+test_tensor_2 = LorentzObject(components=np.random.rand(4,4,4),indices=['e','f','g'])
 
 
 class GammaMatrices(object):
@@ -14,18 +43,14 @@ class GammaMatrices(object):
         self.index = index
         self.shape = (4,4,4)
 
-class MinkowskiMetric(LorentzObject):
-    def __init__(self,indices):
-        LorentzObject.__init__(self,order=2)
-        self.indices = indices
-        self.componets = lg.minkowski_metric
 
 class Lorentz4vector(LorentzObject):
-    def __init__(self,components,mass = None,name = 'nothing',index_name = 'mu'):
-        LorentzObject.__init__(self,order=1)
+    def __init__(self,components,mass = None,name = 'nothing',index = 'a'):
+        LorentzObject.__init__(self,indices=index,components=components)
         self.__name = name
 #4-vector components
         self.__components = np.float64(components)
+        self.index_name = index
 #Particle mass. if you would like to operator at high energy limit, just set this to zero.
 #If mass is not given, code will calculate it for you.
 #Since we're talking about initial or final state particles mainly, off shell particles are not allowed.
@@ -38,9 +63,7 @@ class Lorentz4vector(LorentzObject):
         self.__on_shell = check_on_shell_ness(self.__components,self.__mass)
         self.transformation = lg.lorentz_generators[0]
 #The four vectors are initialised as covariant 4 vectors.
-        self.index_case = [True]
         self.__original_components = components
-        self.index_name = [index_name]
         self.__mag = np.sqrt(self.__components[0]**2-fcc(self.__components,self.__components))
         self.p3 = self.__components[1:]
         self.e = self.__components[0]
@@ -60,10 +83,14 @@ class Lorentz4vector(LorentzObject):
 
     def __mul__(self, other):
         if isinstance(other,Lorentz4vector):
-            if self.index_name == other.index_name:
+            if self.indices == other.indices:
                 return fcc(self.__components,other.__components)
             else:
-                return
+                tmp = np.zeros(shape=(4,4))
+                for i in range(4):
+                    for j in range(4):
+                        tmp[i][j] = self.components[i]*other.components[j]
+                return LorentzObject(components=tmp,indices=list(self.indices+other.indices))
         elif other.shape == (4,):
             return fcc(self.__components,other)
         elif isinstance(other,GammaMatrices):
@@ -152,21 +179,18 @@ class Slashed_Momentum(object):
 
 
 class Lorentz_order_2_tensor(LorentzObject):
-    def __init__(self,components = lg.minkowski_metric,names=['mu','nu'],cases=[True,True],name = 'order 2 Lorentz Tensor'):
-        LorentzObject.__init__(self,order=2)
-        self.components = components
-        self.names = names
-        self.cases = cases
-        indices = []
-        for i in range(2):
-            indices.append((names[i], [i, cases[i]]))
-        self.indices = dict(indices)
+    def __init__(self,components = lg.minkowski_metric,indices=['a','b'],name = 'order 2 Lorentz Tensor'):
+        LorentzObject.__init__(self,components=components,indices=indices)
 
     def expand_along_axis(self,axis):
         if axis == 0:
             return self.components
         elif axis == 1:
             return self.components.transpose()
+
+
+
+
 
 
 def v3_ip(l4v1,l4v2):
@@ -391,13 +415,18 @@ class LorentzTransFormation(object):
 
 
 def gamma_matrices_trace_generator(number):
-    if number == 2:
-        return
+    if number/2 != 0:
+        return 0
+    else:
+        return 1
 
-ga_mu = GammaMatrices(index='mu')
-p0 = Lorentz4vector(components=[4,3,2,1])
-ps = p0.slashed()
-print((p0*ga_mu).matrix)
-print(ps.matrix)
-print(np.trace(ps.matrix))
-print(p0*p0)
+# ga_mu = GammaMatrices(index='mu')
+# p0 = Lorentz4vector(components=[4,3,2,1])
+# ps = p0.slashed()
+# print((p0*ga_mu).matrix)
+# print(ps.matrix)
+# print(np.trace(ps.matrix))
+# print(p0*p0)
+# a = Lorentz4vector(components=[4,3,2,1],index='a')
+# b = Lorentz4vector(components=[10,4,4,4],index='b')
+# print((a*b).components)

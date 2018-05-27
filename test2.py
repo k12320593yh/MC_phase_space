@@ -14,4 +14,4 @@ test_masses = [1,2,3]
 
 
 
-print("Running time : %f CPU seconds" % (end_CPU - start_CPU))
+# print("Running time : %f CPU seconds" % (end_CPU - start_CPU))

@@ -106,7 +106,7 @@ def two_two_phase_space_dot(s_sqrt,masses):
 
     return Event(vectors=np.array([p_3.get_4_vector(), p_4.get_4_vector()]),weight=weight,final_state_particles=2)
 
-two_two_phase_space_dot(s_sqrt=500,masses=[0,0])
+# two_two_phase_space_dot(s_sqrt=500,masses=[0,0])
 
 
 
