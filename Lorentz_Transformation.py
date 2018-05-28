@@ -22,7 +22,7 @@ class LorentzObject(object):
     # to describe the indices, whose elements are the indices name or the Lorentz Tensor and indices are the position
     # of each Lorentz index.
     def __mul__(self, other):
-        print("bing!")
+        # print("bing!")
         if not isinstance(other,LorentzObject):
             return LorentzObject(components=self.components*other,indices=self.indices,cases=self.case)
         else:
@@ -51,12 +51,16 @@ class Metric_Tensor(LorentzObject):
         LorentzObject.__init__(self,components=lg.minkowski_metric,indices=['mu','nu'],cases=[True,True])
         self.ismetrictensor = True
 
+    def __repr__(self):
+        return lg.minkowski_metric
+
 #This involves initialise and manipulate numpy ndarray with unknown shape
 #May simply not be the correct path. What about turn to symbolic, algebraic solution?
 
 class CaseError(Exception):
     def __int__(self):
         pass
+
 
 def contract(tensor1, tensor2):
     new_indices = []
@@ -65,8 +69,8 @@ def contract(tensor1, tensor2):
     tensor2_tmp = tensor2.components
     tensor1_contract_axes = []
     tensor2_contract_axes = []
-    print(tensor1.indices)
-    print(tensor2.indices)
+    # print(tensor1.indices)
+    # print(tensor2.indices)
     # Acquiring necessary axes information for contraction
     # new_indices keeps the indices of the result tensor
     # while the two contract_axes list keeps the ndarray axis index of the axes to be contracted over.
@@ -122,7 +126,7 @@ class GammaMatricesObject(LorentzObject):
         # The last two dimensions are always used to store gamma indices.
 
     def __mul__(self, other):
-        print("ding!")
+        # print("ding!")
         return contractgamma(self,other)
 
 class Gamma5(object):
@@ -168,7 +172,7 @@ def contractgamma(tensor1, tensor2):
         # print((np.tensordot(tensor1_explicit,tensor2_explicit,axes=([-1],[-2]))).shape)
         # c = np.tensordot(tensor1_explicit, tensor2_explicit, axes=([-1], [-2])).swapaxes(-2, -3)
         c1 =np.tensordot(tensor1_explicit,tensor2_explicit,axes=([-1],[-2])).swapaxes(-2,-3)
-        print('dong!')
+        # print('dong!')
         # print(c[0,0])
         # print(c1[0,0])
         return GammaMatricesObject(components=c1,
@@ -221,6 +225,14 @@ class Lorentz4vector(LorentzObject):
         for i in range(3):
             a+=self.p3[i]**2
         self.p3norm = np.sqrt(a)
+
+    # This is disabled in avoidance of confusion.
+    # de__repr__(self):
+    #     return self.componentsf
+
+    def __str__(self):
+        return str(self.components)
+
     def get_4_vector(self):
         return np.array(self.components)
 
@@ -242,7 +254,7 @@ class Lorentz4vector(LorentzObject):
                 return LorentzObject(components=tmp,indices=list(self.indices+other.indices))
         elif other.shape == (4,):
             return fcc(self.components,other)
-        elif isinstance(other,GammaMatrices):
+        elif isinstance(other,GammaMatricesObject):
             return Slashed_Momentum(self.components)
 
     def sh(self,message=''):
@@ -316,6 +328,7 @@ class Lorentz4vector(LorentzObject):
 
 
 
+
 class Slashed_Momentum(object):
     def __init__(self,momentum):
         if isinstance(momentum,Lorentz4vector):
@@ -323,22 +336,6 @@ class Slashed_Momentum(object):
         else:
             p = momentum
         self.matrix = p[0]*lg.gamma_0 - np.sum(p[i]*lg.gamma_matrices[i] for i in range(1,4))
-
-
-
-# Abandoned.
-# class Lorentz_order_2_tensor(LorentzObject):
-#     def __init__(self,components = lg.minkowski_metric,indices=['a','b'],name = 'order 2 Lorentz Tensor'):
-#         LorentzObject.__init__(self,components=components,indices=indices)
-#
-#     def expand_along_axis(self,axis):
-#         if axis == 0:
-#             return self.components
-#         elif axis == 1:
-#             return self.components.transpose()
-
-
-
 
 
 
@@ -376,52 +373,6 @@ def cos_theta(l4v1,l4v2):
     return a/np.sqrt(b*c)
 
 
-#Not Ready yet. Do not use.
-class Lorentz_HD_tensor(object):
-#Initialised to be g^{\mu\nu} by default.
-#Two attributes are initialised with the object: An ndarray storing explict matrix form, another is a dict
-#whose keys are the index names and values binary tuples, 1st component being the location while the second being
-#the case.
-    def __init__(self,name = 'HDtensor',components = lg.minkowski_metric,names = ['mu','nu'],cases = [True,True]):
-        for i in components.shape:
-            if i != 4:
-                raise TypeError("Wrong shape of tensor to initialise a Lorentz object")
-        self.components = components
-        # if (len(names) != len(cases)) or len(names) != len(components.shape) or len(cases) != len(components.shape):
-        #     raise TypeError("Tensor dimensionality does not match number of indices.")
-        indices = []
-        for i in range(len(names)):
-            indices.append((names[i],[i,cases[i]]))
-        self.indices = dict(indices)
-
-
-    def get_indice(self):
-        return self.indices
-
-    def expand_to_component_vectors_along_certain_index(self,index):
-        pass
-        # axis_number = self.indices[index][0]
-        # components_tmp = np.swapaxes(self.components,0,axis_number)
-        # vectors = []
-        # for i in range(components_tmp.shape[0]):
-        #     index_tuple_list = np.zeros(len(self.indices))
-        #     index_tuple_list[0] = i
-        #     index_tuple = tuple(index_tuple_list)
-        #     print(index_tuple)
-        #     vectors.append(components_tmp[i]*components_tmp.flatten()[i])
-        #Maybe simply not a good idea.
-
-def two_object_contraction(lorentz_object1,lorentz_object2):
-    pass
-
-
-#Dont have a good idea on this yet
-#Takes a list of objects with Lorentz indices as arguments. The location
-def general_contraction(lorentz_objects):
-    pass
-
-#2 -> 1 4vector add at vertices. The new particle is assumed to be on shell.
-#Mass here is of little significance. Can override while knowing the real particle mass.
 def four_vector_add(l4v1,l4v2):
     summ = l4v1.get_4_vector()+l4v2.get_4_vector()
     #p^2 = m^2 for every on shell particle
@@ -584,3 +535,6 @@ def gamma_matrices_trace_generator(gamma):
 # a = Lorentz4vector(components=[4,3,2,1],index='a')
 # b = Lorentz4vector(components=[10,4,4,4],index='b')
 # print((a*b).components)
+
+p1 = Lorentz4vector(components=[1,0,0,1])
+p2 = Lorentz4vector(components=[2,0,0,1])
