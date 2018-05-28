@@ -5,48 +5,81 @@ import scipy.linalg as sp
 
 #A general Lorentz 4 vector. Just what you learned in peskin.
 class LorentzObject(object):
-    def __init__(self,components,indices):
+    def __init__(self,components,indices,cases):
         self.order = len(indices)
         self.components = components
         self.indices = indices
+        self.case = cases
+        if components.shape == (4,4):
+            self.ismetrictensor = True
+            for i in range(4):
+                for j in range(4):
+                    if components[i][j] != lg.minkowski_metric[i][j]:
+                        self.ismetrictensor = False
 
-    # def __mul__(self, other):
-    #     contract(self, other)
+    # If we assume all indices are properly cased, then an 1D list would safely encode all necessary info
+    # to describe the indices, whose elements are the indices name or the Lorentz Tensor and indices are the position
+    # of each Lorentz index.
+    def __mul__(self, other):
+         contract(self, other)
 
 
 #This involves initialise and manipulate numpy ndarray with unknown shape
 #May simply not be the correct path. What about turn to symbolic, algebraic solution?
 
 
-# def contract(self, other):
-#     new_indices = []
-#     axis_to_be_contracted_over = []
-#     print(self.indices)
-#     print(other.indices)
-#     for i in self.indices:
-#         if i not in other.indices:
-#             new_indices.append(i)
-#         else:
-#             axis_to_be_contracted_over.append(i)
-#     for j in other.indices:
-#         if j not in self.indices:
-#             new_indices.append(j)
+def contract(tensor1, tensor2):
+    new_indices = []
+    tensor1_explicit = tensor1.components
+    tensor2_explicit = tensor2.components
+    tensor2_tmp = tensor2.components
+    tensor1_contract_axes = []
+    tensor2_contract_axes = []
+    print(tensor1.indices)
+    print(tensor2.indices)
+    # Acquiring necessary axes information for contraction
+    # new_indices keeps the indices of the result tensor
+    # while the two contract_axes list keeps the ndarray axis index of the axes to be contracted over.
+    for i in tensor1.indices:
+        if i not in tensor2.indices:
+            new_indices.append(i)
+        else:
+            tensor1_contract_axes.append(tensor1.indices.index(i))
+            tensor2_contract_axes.append(tensor2.indices.index(i))
+    for j in tensor2.indices:
+        if j not in tensor1.indices:
+            new_indices.append(j)
+    if len(tensor2_contract_axes) == 0:
+        for i in tensor1_explicit:
+            i = i*tensor2_explicit
+            return LorentzObject(components=tensor1_explicit,indices=tensor1.indices+tensor2.indices)
+    # If tensor 1 and tensor2 share no common indices, return the new tensor with
+    # Lower the second tensor index before doing the contraction.
+    for i in tensor2_contract_axes:
+        tensor2_tmp = np.tensordot(tensor2_tmp,lg.minkowski_metric,axes=([i],[0]))
+    # Now that all indices to be contracted over in tensor2 are placed in proper case,
+    # do a normal tensor dot to get the result
+    result_explict = np.tensordot(tensor1_explicit,tensor2_tmp,axes=(tensor1_contract_axes,tensor2_contract_axes))
+    if len(new_indices) != 0:
+        return LorentzObject(components=result_explict,indices=new_indices)
+    else:
+        return result_explict
+
+# This function has an obvious flaw: it cannot handle
+# test_tensor_1 = LorentzObject(components=np.random.rand(4,4,4),indices=['a','b','c'])
+# test_tensor_2 = LorentzObject(components=np.random.rand(4,4,4),indices=['e','f','g'])
 
 
+class GammaMatrices(LorentzObject):
+    def __init__(self,index=['mu'],case = [True]):
+        LorentzObject.__init__(self,components=lg.gamma_matrices,indices=index,cases=case)
 
-test_tensor_1 = LorentzObject(components=np.random.rand(4,4,4),indices=['a','b','c'])
-test_tensor_2 = LorentzObject(components=np.random.rand(4,4,4),indices=['e','f','g'])
 
-
-class GammaMatrices(object):
-    def __init__(self,index):
-        self.index = index
-        self.shape = (4,4,4)
 
 
 class Lorentz4vector(LorentzObject):
-    def __init__(self,components,mass = None,name = 'nothing',index = 'a'):
-        LorentzObject.__init__(self,indices=index,components=components)
+    def __init__(self,components,mass = None,name = 'nothing',index = 'a',cases = [True]):
+        LorentzObject.__init__(self,indices=index,components=components,cases=cases)
         self.__name = name
 #4-vector components
         self.__components = np.float64(components)
@@ -177,16 +210,16 @@ class Slashed_Momentum(object):
 
 
 
-
-class Lorentz_order_2_tensor(LorentzObject):
-    def __init__(self,components = lg.minkowski_metric,indices=['a','b'],name = 'order 2 Lorentz Tensor'):
-        LorentzObject.__init__(self,components=components,indices=indices)
-
-    def expand_along_axis(self,axis):
-        if axis == 0:
-            return self.components
-        elif axis == 1:
-            return self.components.transpose()
+# Abandoned.
+# class Lorentz_order_2_tensor(LorentzObject):
+#     def __init__(self,components = lg.minkowski_metric,indices=['a','b'],name = 'order 2 Lorentz Tensor'):
+#         LorentzObject.__init__(self,components=components,indices=indices)
+#
+#     def expand_along_axis(self,axis):
+#         if axis == 0:
+#             return self.components
+#         elif axis == 1:
+#             return self.components.transpose()
 
 
 

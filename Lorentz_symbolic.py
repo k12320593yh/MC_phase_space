@@ -9,14 +9,26 @@ import LorentzGenerators as lg
 #For now this only takes care of Lorentz four momenta, gamma matrices and some ordinary constant tensors
 #like levi-civita.
 
+#
 
 class SymbolicLorentzObject(object):
     def __init__(self,indices=['m'],cases=[True]):
-        self.index = indices
-        self.case = cases
-
+        index = []
+        for i in range(len(indices)):
+            index.append([indices[i],cases[i]])
+        self.index = np.array(index)
+        print(self.index)
     def __mul__(self, other):
-        pass
+        if isinstance(other,MinkowskiMetric):
+            for i in self.index:
+                for j in other.index:
+
+
+
+class MinkowskiMetric(SymbolicLorentzObject):
+    def __init__(self,indices=['m','n'],cases=[True,True]):
+        SymbolicLorentzObject.__init__(self,indices=indices,cases=cases)
+
 
 class SFourVector(SymbolicLorentzObject):
     def __init__(self,index='m',case=True):
@@ -28,7 +40,12 @@ class SFourVector(SymbolicLorentzObject):
 
     def explict(self,expilcit_l4v):
         if isinstance(expilcit_l4v,lt.Lorentz4vector):
+            pass
 
+
+class GammaObject(SymbolicLorentzObject):
+    def __init__(self,index='m',case=True):
+        SymbolicLorentzObject.__init__(self,indices=[index],case=[case])
 
 class ScalarProduct(object):
     def __init__(self,v1,v2):

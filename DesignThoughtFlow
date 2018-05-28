@@ -1,0 +1,11 @@
+Potential NP Operations that may be useful:
+
+--np.transpose
+
+The goal is to swap the desired axis to the first a fwe in order to slice them off once and for all. Suppose I have a order 5 tensor with five indices
+
+
+--np.tensordot
+
+This seems the key to realise tensor contractions. First apply metric tensors to achieve proper index cases, then do the tensor dot.
+
