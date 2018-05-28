@@ -1,3 +1,9 @@
+0.6
+--can now handle gamma matrices.
+--can now handle generaal Lorentz Object contracition
+--pending trace calculation function. Symbolic or Analytic?
+
+
 0.5
 --two_three_phase_space_dot now takes s_sqrt as an argument, rather than sily momentum0 and momentum1.
 

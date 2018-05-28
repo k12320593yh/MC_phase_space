@@ -2,31 +2,61 @@ import numpy as np
 import LorentzGenerators as lg
 import scipy.linalg as sp
 
+#Is it possible to define Lorentz Objects as ndarray's subclass?
 
 #A general Lorentz 4 vector. Just what you learned in peskin.
 class LorentzObject(object):
     def __init__(self,components,indices,cases):
         self.order = len(indices)
-        self.components = components
+        self.components = np.array(components)
         self.indices = indices
-        self.case = cases
-        if components.shape == (4,4):
-            self.ismetrictensor = True
-            for i in range(4):
-                for j in range(4):
-                    if components[i][j] != lg.minkowski_metric[i][j]:
-                        self.ismetrictensor = False
-
+        self.cases = cases
+        # if self.components.shape == (4,4):
+        #     self.ismetrictensor = True
+        #     for i in range(4):
+        #         for j in range(4):
+        #             if self.components[i][j] != lg.minkowski_metric[i][j]:
+        #                 self.ismetrictensor = False
+        self.shape = self.components.shape
     # If we assume all indices are properly cased, then an 1D list would safely encode all necessary info
     # to describe the indices, whose elements are the indices name or the Lorentz Tensor and indices are the position
     # of each Lorentz index.
     def __mul__(self, other):
-         contract(self, other)
+        print("bing!")
+        if not isinstance(other,LorentzObject):
+            return LorentzObject(components=self.components*other,indices=self.indices,cases=self.case)
+        else:
+            return contract(self, other)
 
+# class LorentzScalar(LorentzObject):
+#     def __int__(self,value):
+#         self.value = value
+#
+#     def __mul__(self, other):
+#         if isinstance(other,LorentzScalar):
+#             return self.value*other.value
+#         else:
+#             return self.value*other
+#
+#     def __add__(self, other):
+#         if isinstance(other,LorentzScalar):
+#             return self.value+other.value
+#         else:
+#             return self.value+other
+
+
+#It is recommended to initialise a metric tensor with this to avoid complication.
+class Metric_Tensor(LorentzObject):
+    def __init__(self,indices):
+        LorentzObject.__init__(self,components=lg.minkowski_metric,indices=['mu','nu'],cases=[True,True])
+        self.ismetrictensor = True
 
 #This involves initialise and manipulate numpy ndarray with unknown shape
 #May simply not be the correct path. What about turn to symbolic, algebraic solution?
 
+class CaseError(Exception):
+    def __int__(self):
+        pass
 
 def contract(tensor1, tensor2):
     new_indices = []
@@ -40,40 +70,126 @@ def contract(tensor1, tensor2):
     # Acquiring necessary axes information for contraction
     # new_indices keeps the indices of the result tensor
     # while the two contract_axes list keeps the ndarray axis index of the axes to be contracted over.
-    for i in tensor1.indices:
-        if i not in tensor2.indices:
+    for i in range(len(tensor1.indices)):
+        if tensor1.indices[i] not in tensor2.indices:
             new_indices.append(i)
         else:
-            tensor1_contract_axes.append(tensor1.indices.index(i))
-            tensor2_contract_axes.append(tensor2.indices.index(i))
+            j = tensor2.indices.index(tensor1.indices[i])
+            if tensor1.cases[i] != tensor2.cases[j]:
+                tensor1_contract_axes.append(i)
+                tensor2_contract_axes.append(j)
+            else:
+                raise TypeError("Pair of to be contracted indices share common case.")
     for j in tensor2.indices:
         if j not in tensor1.indices:
             new_indices.append(j)
     if len(tensor2_contract_axes) == 0:
-        for i in tensor1_explicit:
-            i = i*tensor2_explicit
-            return LorentzObject(components=tensor1_explicit,indices=tensor1.indices+tensor2.indices)
+        return LorentzObject(components=np.tensordot(tensor1_explicit,tensor2_explicit,axes=0),indices=tensor1.indices+tensor2.indices,
+                                 cases=tensor1.case+tensor2.cases)
     # If tensor 1 and tensor2 share no common indices, return the new tensor with
     # Lower the second tensor index before doing the contraction.
+    # This might be useful for vague uses, but so far I haven't found a proper way to deal with metric
+    # tensors in vague mode.
+    """
     for i in tensor2_contract_axes:
         tensor2_tmp = np.tensordot(tensor2_tmp,lg.minkowski_metric,axes=([i],[0]))
+    """
     # Now that all indices to be contracted over in tensor2 are placed in proper case,
     # do a normal tensor dot to get the result
     result_explict = np.tensordot(tensor1_explicit,tensor2_tmp,axes=(tensor1_contract_axes,tensor2_contract_axes))
     if len(new_indices) != 0:
-        return LorentzObject(components=result_explict,indices=new_indices)
+        return LorentzObject(components=result_explict,indices=new_indices,cases=[True]*len(new_indices))
     else:
         return result_explict
 
-# This function has an obvious flaw: it cannot handle
+# This function has an obvious flaw: it cannot handle the metric tensors.
+# For now, all Lorentz objects are assumed to be wrongly upper cased and hence require
+# a metric tensor to lower the index to have correct index case
+#
 # test_tensor_1 = LorentzObject(components=np.random.rand(4,4,4),indices=['a','b','c'])
 # test_tensor_2 = LorentzObject(components=np.random.rand(4,4,4),indices=['e','f','g'])
 
 
-class GammaMatrices(LorentzObject):
-    def __init__(self,index=['mu'],case = [True]):
-        LorentzObject.__init__(self,components=lg.gamma_matrices,indices=index,cases=case)
+#They're order-3 tensors while being order-1 Lorentz objects. Worth some caution.
+class GammaMatricesObject(LorentzObject):
+    def __init__(self,indices=['mu'],cases = [True],components=lg.gamma_matrices):
+        if cases[0]:
+            LorentzObject.__init__(self,components=components,indices=indices,cases=cases)
+        else:
+            LorentzObject.__init__(self,components=np.tensordot(lg.minkowski_metric,components,
+                                                                axes=([1],[0])),indices=indices,cases=cases)
 
+        # The last two dimensions are always used to store gamma indices.
+
+    def __mul__(self, other):
+        print("ding!")
+        return contractgamma(self,other)
+
+class Gamma5(object):
+    def __init__(self):
+        pass
+# g = GammaMatricesObject()
+# print(g.fullcomponent)
+
+def contractgamma(tensor1, tensor2):
+    if isinstance(tensor2,Gamma5):
+        tensor1_explicit = tensor1.components.reshape(4**len(tensor1.indices),4,4)
+        for i in range(tensor1_explicit.shape[0]):
+            tensor1_explicit[i] = np.matmul(tensor1_explicit[i],lg.gamma_5)
+        result = np.reshape(tensor1_explicit,newshape=(4,)*len(tensor1.indices)+(4,4))
+        return GammaMatricesObject(components=result,indices=tensor1.indices,cases=tensor1.cases)
+    new_indices = []
+    tensor1_explicit = tensor1.components
+    tensor2_explicit = tensor2.components
+    tensor2_tmp = tensor2.components
+    tensor1_contract_axes = []
+    tensor2_contract_axes = []
+    # print(tensor1.indices)
+    # print(tensor2.indices)
+    # Acquiring necessary axes information for contraction
+    # new_indices keeps the indices of the result tensor
+    # while the two contract_axes list keeps the ndarray axis index of the axes to be contracted over.
+    # This only goes through Lorentz indices so there is no need to rewrite.
+    for i in range(len(tensor1.indices)):
+        if tensor1.indices[i] not in tensor2.indices:
+            new_indices.append(tensor1.indices[i])
+        else:
+            j = tensor2.indices.index(tensor1.indices[i])
+            if tensor1.cases[i] != tensor2.cases[j]:
+                tensor1_contract_axes.append(i)
+                tensor2_contract_axes.append(j)
+            else:
+                raise TypeError("Pair of to be contracted indices share common case.")
+    # tensor2_remaining_indices = len(tensor2.indices)-len(tensor2_contract_axes)
+    for j in tensor2.indices:
+        if j not in tensor1.indices:
+            new_indices.append(j)
+    if len(tensor2_contract_axes) == 0:
+        # print((np.tensordot(tensor1_explicit,tensor2_explicit,axes=([-1],[-2]))).shape)
+        # c = np.tensordot(tensor1_explicit, tensor2_explicit, axes=([-1], [-2])).swapaxes(-2, -3)
+        c1 =np.tensordot(tensor1_explicit,tensor2_explicit,axes=([-1],[-2])).swapaxes(-2,-3)
+        print('dong!')
+        # print(c[0,0])
+        # print(c1[0,0])
+        return GammaMatricesObject(components=c1,
+                                   indices=tensor1.indices+tensor2.indices,
+                                 cases=tensor1.cases+tensor2.cases)
+    # If tensor 1 and tensor2 share no common indices, return the new tensor with
+    # Lower the second tensor index before doing the contraction.
+    # This might be useful for vague uses, but so far I haven't found a proper way to deal with metric
+    # tensors in vague mode.
+    """
+    for i in tensor2_contract_axes:
+        tensor2_tmp = np.tensordot(tensor2_tmp,lg.minkowski_metric,axes=([i],[0]))
+    """
+    # Now that all indices to be contracted over in tensor2 are placed in proper case,
+    # do a normal tensor dot to get the result
+    result_explict = np.tensordot(tensor1_explicit,tensor2_tmp,
+                                  axes=(tensor1_contract_axes+[-1],tensor2_contract_axes+[-2]))
+    if len(new_indices) != 0:
+        return GammaMatricesObject(components=result_explict.swapaxes(-2,-3),indices=new_indices,cases=[True]*len(new_indices))
+    else:
+        return result_explict
 
 
 
@@ -82,7 +198,7 @@ class Lorentz4vector(LorentzObject):
         LorentzObject.__init__(self,indices=index,components=components,cases=cases)
         self.__name = name
 #4-vector components
-        self.__components = np.float64(components)
+        self.components = np.float64(components)
         self.index_name = index
 #Particle mass. if you would like to operator at high energy limit, just set this to zero.
 #If mass is not given, code will calculate it for you.
@@ -93,31 +209,31 @@ class Lorentz4vector(LorentzObject):
         else:
             self.__mass = mass
 #Check if this 4-vector is on shell.
-        self.__on_shell = check_on_shell_ness(self.__components,self.__mass)
+        self.__on_shell = check_on_shell_ness(self.components,self.__mass)
         self.transformation = lg.lorentz_generators[0]
 #The four vectors are initialised as covariant 4 vectors.
         self.__original_components = components
-        self.__mag = np.sqrt(self.__components[0]**2-fcc(self.__components,self.__components))
-        self.p3 = self.__components[1:]
-        self.e = self.__components[0]
-        self.shape = self.__components.shape
+        self.__mag = np.sqrt(self.components[0]**2-fcc(self.components,self.components))
+        self.p3 = self.components[1:]
+        self.e = self.components[0]
+        self.shape = self.components.shape
         a = 0
         for i in range(3):
             a+=self.p3[i]**2
         self.p3norm = np.sqrt(a)
     def get_4_vector(self):
-        return np.array(self.__components)
+        return np.array(self.components)
 
     def __add__(self, other):
         if isinstance(other,Lorentz4vector):
-            return Lorentz4vector(components=self.__components+other.get_4_vector())
+            return Lorentz4vector(components=self.components+other.get_4_vector())
         else:
-            return np.array(self.__components+other)
+            return np.array(self.components+other)
 
     def __mul__(self, other):
         if isinstance(other,Lorentz4vector):
             if self.indices == other.indices:
-                return fcc(self.__components,other.__components)
+                return fcc(self.components,other.components)
             else:
                 tmp = np.zeros(shape=(4,4))
                 for i in range(4):
@@ -125,12 +241,12 @@ class Lorentz4vector(LorentzObject):
                         tmp[i][j] = self.components[i]*other.components[j]
                 return LorentzObject(components=tmp,indices=list(self.indices+other.indices))
         elif other.shape == (4,):
-            return fcc(self.__components,other)
+            return fcc(self.components,other)
         elif isinstance(other,GammaMatrices):
-            return Slashed_Momentum(self.__components)
+            return Slashed_Momentum(self.components)
 
     def sh(self,message=''):
-        print(message+': '+str(self.__components))
+        print(message+': '+str(self.components))
 
     def get_mass(self):
         return self.__mass
@@ -142,38 +258,38 @@ class Lorentz4vector(LorentzObject):
     def lorentz_transformation(self,ltf,mode=0):
         # tmp = np.matmul(lg.minkowski_metric,ltf.get_matrix_form())
         if mode == 0:
-            self.__components = np.matmul(ltf.get_matrix_form(),self.__components)
+            self.components = np.matmul(ltf.get_matrix_form(),self.components)
         elif mode == 1:
-            return Lorentz4vector(components=np.matmul(ltf.get_matrix_form(),self.__components),mass=self.__mass)
+            return Lorentz4vector(components=np.matmul(ltf.get_matrix_form(),self.components),mass=self.__mass)
         # self.__index_case = not self.__index_case
 
     def lorentz_transformation_off_matrix(self,matrix,mode=0):
         #Works exactly like the previous one but takes a np.ndarry as argument.
         if mode == 0:
-            self.__components = np.matmul(matrix,self.__components)
+            self.components = np.matmul(matrix,self.components)
         elif mode == 1:
-            return Lorentz4vector(components=np.matmul(matrix,self.__components),mass=self.__mass)
+            return Lorentz4vector(components=np.matmul(matrix,self.components),mass=self.__mass)
 
     #SO(3) rotate the momentum into z axis.
     def lorentz_rot_toz(self,record=False):
-        rot_mat = find_toz_rotation(self.__components)
+        rot_mat = find_toz_rotation(self.components)
         # tmp = np.matmul(lg.minkowski_metric,rot_mat)
-        self.__components = np.matmul(rot_mat,self.__components)
+        self.components = np.matmul(rot_mat,self.components)
         # self.transformation = np.matmul(rot_mat,self.transformation)
         # self.__index_case = not self.__index_case
         self.rotmat = rot_mat
 
 
     def zrapidity(self):
-        if abs(self.__components[1]) > 1e-8 or abs(self.__components[2]) > 1e-8:
+        if abs(self.components[1]) > 1e-8 or abs(self.components[2]) > 1e-8:
             raise TypeError("Three momentum not in z direction.")
         self.__zrapidity = find_boost_to_rest(self)
-        if self.__components[-1]<0:
+        if self.components[-1]<0:
             self.__zrapidity = -self.__zrapidity
 
     #Swap the case of index. p^\mu -> p_\mu, or vice versa.
     def swap_case(self):
-        self.__components = np.matmul(lg.minkowski_metric,self.__components)
+        self.components = np.matmul(lg.minkowski_metric,self.components)
         self.index_case = not self.index_case
 
     def get_zrapidity(self):
@@ -185,7 +301,7 @@ class Lorentz4vector(LorentzObject):
         # print(boost_mat)
         # print(simple_z_boost(-self.__zrapidity))
         tmp = np.matmul(lg.minkowski_metric,boost_mat)
-        self.__components = np.matmul(tmp,self.__components)
+        self.components = np.matmul(tmp,self.components)
         # self.transformation = np.matmul(boost_mat,self.transformation)
         # self.__index_case = not self.__index_case
         self.boostmat = boost_mat
@@ -195,7 +311,7 @@ class Lorentz4vector(LorentzObject):
         return self.__mag
 
     def slashed(self):
-        return Slashed_Momentum(self.__components)
+        return Slashed_Momentum(self.components)
 
 
 
@@ -447,11 +563,16 @@ class LorentzTransFormation(object):
         self.__matrix_form = matrix
 
 
-def gamma_matrices_trace_generator(number):
-    if number/2 != 0:
+def gamma_matrices_trace_generator(gamma):
+    if not isinstance(gamma,GammaMatricesObject):
+        raise TypeError("Not a gamma object")
+    if len(GammaMatricesObject.indices)%2 != 0:
         return 0
     else:
-        return 1
+        if len(GammaMatricesObject.indices) == 2:
+            return Metric_Tensor(indices=GammaMatricesObject)
+        else:
+            gamma_matrices_trace_generator()
 
 # ga_mu = GammaMatrices(index='mu')
 # p0 = Lorentz4vector(components=[4,3,2,1])

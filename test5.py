@@ -15,4 +15,8 @@ print(lt.gamma_matrices_trace_generator(5))
 # c = (1,2,3,2,3)
 # print(type(c))
 # print(b[c])
-#it is possible to index a np array using a tuple. 
+#it is possible to index a np array using a tuple.
+a = np.reshape(np.linspace(0,8,9),newshape=(3,3))
+b = np.reshape(np.linspace(1,9,9),newshape=(3,3))
+print(np.matmul(a,b))
+print(np.tensordot(a,b,axes=([-1],[-2])))
