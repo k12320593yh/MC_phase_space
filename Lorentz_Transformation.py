@@ -242,6 +242,9 @@ class Lorentz4vector(LorentzObject):
         else:
             return np.array(self.components+other)
 
+    def __sub__(self, other):
+        return self+other*(-1)
+
     def __mul__(self, other):
         if isinstance(other,Lorentz4vector):
             if self.indices == other.indices:
@@ -252,10 +255,12 @@ class Lorentz4vector(LorentzObject):
                     for j in range(4):
                         tmp[i][j] = self.components[i]*other.components[j]
                 return LorentzObject(components=tmp,indices=list(self.indices+other.indices))
-        elif other.shape == (4,):
+        elif isinstance(other,np.ndarray):
             return fcc(self.components,other)
         elif isinstance(other,GammaMatricesObject):
             return Slashed_Momentum(self.components)
+        else:
+            return Lorentz4vector(components=other*self.components)
 
     def sh(self,message=''):
         print(message+': '+str(self.components))

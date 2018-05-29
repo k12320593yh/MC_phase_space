@@ -113,6 +113,7 @@ def two_two_phase_space_dot(s_sqrt,masses):
 def two_three_phase_space_dot(s_sqrt,masses):
 #All final state particles must be on shell hence there're 3n-4 free variable to be integrated over. In our case,
 #it's 5.
+    # print(s_sqrt)
     raw_dot = np.random.rand(5,)
     momentum = lt.Lorentz4vector(components=[s_sqrt,0,0,0])
     # momentum.lorentz_rot_toz()
@@ -153,6 +154,12 @@ def two_three_phase_space_dot(s_sqrt,masses):
                                              components=momentum.get_4_vector()-p_1.get_4_vector(),
                                              mass=mediate_virtual_particle_mass)
     p_mediator.lorentz_transformation_off_matrix(random_phi_theta_rot_0)
+    # print(p_1.components[0]+p_mediator.components[0])
+
+    #The energy is not distributed equally among p_2 and p_3
+    #Further investigation planned.
+
+    # print(p_mediator.components[0])
     # print(p_mediator.get_4_vector())
     # p_1.sh(message='p_1 before rotation 0')
     p_1.lorentz_transformation_off_matrix(random_phi_theta_rot_0)
@@ -219,13 +226,31 @@ def two_three_phase_space_dot(s_sqrt,masses):
     # print(p_2.get_4_vector())
     # print(p_3.get_4_vector())
     # print(p_3.get_4_vector()+p_2.get_4_vector()+p_1.get_4_vector())
-
+    # print(lt.fcc(p_1.components,p_2.components))
+    # print(lt.fcc(p_1.components,p_3.components))
+    # print(lt.fcc(p_2.components,p_3.components))
     weight = 1/((4*np.pi)**5*(s_sqrt/2)**2*p_1.e*p_2.e*p_3.e)
+    # print(weight)
+    # print('weight')
     return Event(vectors=np.array([p_1.get_4_vector(),p_2.get_4_vector(),p_3.get_4_vector()]),
                  weight=weight,final_state_particles=3)
 
+#
+p1 = np.zeros(4, )
+p2 = np.zeros(4, )
+p3 = np.zeros(4, )
+for i in range(10000):
+    a = two_three_phase_space_dot(s_sqrt=5,masses=[0,0,0]).get_vector()
+    p1 += a[0]
+    p2 += a[1]
+    p3 += a[2]
 
-# two_three_phase_space_dot(s_sqrt=500,masses=[0,0,0])
+print(p1)
+print(p2)
+print(p3)
+two_three_phase_space_dot(s_sqrt=500,masses=[0,0,0])
+#Not enough randomness generated. Further review scheduled.
+
 
 #This function extracts what is necessary from the final state particle momentums.
 #M_square is Lorentz invariant, hence it only depends on the contraction of five ps.
@@ -241,22 +266,39 @@ class Amplitude(object):
         self.dimension = dimension
 
 
-def phase_space_integration(function,number_of_dots=100,s_sqrt=500,masses=[0,0,0],dimension=2):
+def phase_space_integration(function,masses,number_of_dots=100,s_sqrt=500,dimension=2):
     summ = 0
     total_space = 0
     # count = 0
     momentum = lt.Lorentz4vector(components=[s_sqrt,0,0,0],name='decaying mediator',mass=s_sqrt)
     M_square = Amplitude(function=function,dimension=dimension)
-    for i in range(number_of_dots):
-        if dimension == 3:
+    abnornal_dots = []
+    if dimension == 3:
+        for i in range(number_of_dots):
+            # print("#######")
             phase_space_dot = two_three_phase_space_dot(s_sqrt=s_sqrt, masses=masses)
             a = M_square.function(vectors=phase_space_dot.get_vector(),
-                                      masses=masses) * phase_space_dot.get_weight()
-            summ += a
+                                      masses=masses)
+            # print(type(a))
+            # print(a)
+            summ += a[0]*phase_space_dot.get_weight()
+
+            # if a[0] >= 1:
+            #     print("Warning!")
+            #     print(a[-2])
+            #     print(a[-1])
+            # print(a[0])
+            # print(a[3])
+            # print(a[4])
+            # print(a[5])
+                # abnornal_dots.append([a[1:]])
+            # print("#######")
             total_space += phase_space_dot.get_weight()
+            # print(summ)
             # count+=1
 
-        elif dimension == 2:
+    elif dimension == 2:
+        for i in range(number_of_dots):
             phase_space_dot = two_two_phase_space_dot(s_sqrt=s_sqrt,masses=masses)
             a = M_square.function(vectors=phase_space_dot.get_vector(),
                                       masses=masses) * phase_space_dot.get_weight()
@@ -264,7 +306,7 @@ def phase_space_integration(function,number_of_dots=100,s_sqrt=500,masses=[0,0,0
             total_space += phase_space_dot.get_weight()
             # print(a)
             # count+=1
-
+    print(summ)
     return summ/number_of_dots
 
 
