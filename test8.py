@@ -81,7 +81,8 @@ def eenunugamma(vectors, mz=91.2, p=None,masses=[0,0,0]):
     return coefficient*a/b
 
 def eeeegamma(vectors,masses=[0,0,0],s_sqrt = 1):
-    p = np.vstack((np.array([[0,0,0,0],[0.5,0,0,-0.5],[0.5,0,0,0.5]]),vectors))
+    # p = np.vstack((np.array([[0,0,0,0],[0.5,0,0.499999,0],[0.5,0,-0.499999,0]]),vectors))
+    p = np.vstack((lt.four_vector_gen(E=s_sqrt,mass=0.005),vectors))
     p1 = lt.Lorentz4vector(components=p[1])
     p2 = lt.Lorentz4vector(components=p[2])
     p3 = lt.Lorentz4vector(components=p[3])
@@ -107,7 +108,7 @@ def eeeegamma(vectors,masses=[0,0,0],s_sqrt = 1):
     # print(s_)
     # print('s_')
 
-    T = (1/(s*s_*t13*t24))*(s*s_*(s**2+s_**2)+t13*t24*(t13**2+t24**2)+t14*t24*(t14**2+t23**2))
+    T = (1/(s*s_*t13*t24))*(s*s_*(s**2+s_**2)+t13*t24*(t13**2+t24**2)+t14*t23*(t14**2+t23**2))
     S = s/((p1*p5)*(p2*p5))+s_/((p3*p5)*(p4*p5))-t13/((p1*p5)*(p3*p5))-t24/((p2*p5)*(p4*p5))+t14/((p1*p5)*(p4*p5))+t23/((p2*p5)*(p3*p5))
     # print(T)
     # print('T')
@@ -163,19 +164,19 @@ def eemumu(vectors,masses=[0,0]):
     return coefficient*numerator
 
 
-p1 = (0.5,0,0,0.5)
-p2 = (0.5,0,0,-0.5)
-p3 = [0.17809,-0.12791,-0.11334,0.050068]
-p4 = [0.35639,-0.028605,-0.30435,-0.18321]
-p5 = [0.46551,0.15652,0.41770,0.11314]
-v = np.array(p3)
-v = np.vstack((p3,p4))
-v = np.vstack((v,p5))
-# print(eeeegamma(vectors=v))
+# p1 = [0.5,0,0.499999,0]
+# p2 = [0.5,0,-0.499999,0]
+# p3 = [0.178093,-0.127916,0.050068,-0.113348]
+# p4 = [0.356394,-0.028605,-0.183214,-0.304353]
+# p5 = [0.465511,0.156521,0.133146,0.417701]
+# v = np.array(p3)
+# v = np.vstack((p3,p4))
+# v = np.vstack((v,p5))
+# print(eeeegamma(vectors=v)[0])
 
 
-print('!')
-print('bb')
-print(mc.phase_space_integration(eemumu,number_of_dots=10000,s_sqrt=500,masses=[0,0],dimension=2))
-print(mc.phase_space_integration(eeeegamma,number_of_dots=10000,s_sqrt=1))
+# print('!')
+# print('bb')
+# print(mc.phase_space_integration(eemumu,number_of_dots=10000,s_sqrt=500,masses=[0,0],dimension=2))
+print(mc.phase_space_integration(eeeegamma,number_of_dots=10,s_sqrt=500,masses=[0.005,0.005,0],dimension=3))
 
