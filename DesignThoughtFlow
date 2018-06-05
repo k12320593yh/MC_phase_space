@@ -9,3 +9,6 @@ The goal is to swap the desired axis to the first a fwe in order to slice them o
 
 This seems the key to realise tensor contractions. First apply metric tensors to achieve proper index cases, then do the tensor dot.
 
+#With cuts applied, the integral value is now more steady;
+
+#

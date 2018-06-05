@@ -180,3 +180,4 @@ def eemumu(vectors,masses=[0,0]):
 # print(mc.phase_space_integration(eemumu,number_of_dots=10000,s_sqrt=500,masses=[0,0],dimension=2))
 print(mc.phase_space_integration(eeeegamma,number_of_dots=10,s_sqrt=500,masses=[0.005,0.005,0],dimension=3))
 
+

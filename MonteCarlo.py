@@ -142,10 +142,13 @@ def cut(event):
 
     return False
 
+# This works, but is too slow. The dot generating algorithm needs to be modified to
+# cast dot into a particular region we're interested in.
+# And this is what next function does.
 
-
-
-
+def focus_phase_space_dot(bounds):
+    pass
+# planned to be finished within tomorrow.
 
 
 def two_three_phase_space_dot(s_sqrt,masses):
