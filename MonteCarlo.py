@@ -261,18 +261,18 @@ def two_three_phase_space_dot(s_sqrt,masses):
                  weight=weight,final_state_particles=3,masses=masses,raw_dot=raw_dot)
 
 # #
-p1 = np.zeros(4, )
-p2 = np.zeros(4, )
-p3 = np.zeros(4, )
-for i in range(10000):
-    a = two_three_phase_space_dot(s_sqrt=500,masses=[0,0,0]).get_vector()
-    p1 += a[0]
-    p2 += a[1]
-    p3 += a[2]
-
-print(p1)
-print(p2)
-print(p3)
+# p1 = np.zeros(4, )
+# p2 = np.zeros(4, )
+# p3 = np.zeros(4, )
+# for i in range(10000):
+#     a = two_three_phase_space_dot(s_sqrt=500,masses=[0,0,0]).get_vector()
+#     p1 += a[0]
+#     p2 += a[1]
+#     p3 += a[2]
+#
+# print(p1)
+# print(p2)
+# print(p3)
 #Not enough randomness generated. Further review scheduled.
 # for i in range(10000):
 # event = two_three_phase_space_dot(s_sqrt=500, masses=[0, 0, 0])
