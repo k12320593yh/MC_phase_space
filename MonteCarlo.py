@@ -2,6 +2,7 @@ import numpy as np
 import inspect as insp
 import Lorentz_Transformation as lt
 import scipy.linalg as sp
+import sympy as sym
 # np.random.seed(7)
 def test_function_0(r,t,p):
     return (r**2)*np.sin(t)
@@ -251,6 +252,34 @@ def two_three_phase_space_dot(s_sqrt,masses):
     # print(p_1)
     p_2.lorentz_transformation_off_matrix(random_phi_theta_rot_0)
     p_3.lorentz_transformation_off_matrix(random_phi_theta_rot_0)
+
+
+    p4x = sym.Symbol('p4x')
+    p4y = sym.Symbol('p4y')
+    p5x = sym.Symbol('p5x')
+    p5y = sym.Symbol('p5y')
+
+    pgx = p_1.get_4_vector()[1]
+    pgy = p_1.get_4_vector()[2]
+    p4z = p_2.get_4_vector()[3]
+    E_4 = p_2.e
+    E_5 = p_3.e
+    p5z = p_3.get_4_vector()[3]
+    p1 = p_1.get_4_vector()
+    p2 = p_2.get_4_vector()
+    p3 = p_3.get_4_vector()
+    # print(p_2.get_on_shell_ness())
+    # print(p_3.get_on_shell_ness())
+    print(p1[1]+p2[1]+p3[1])
+    print(p1[2]+p2[2]+p3[2])
+    print(p2[1]**2+p2[2]**2+p2[3]**2+masses[1]**2-p2[0]**2)
+    print(p3[1]**2+p3[2]**2+p3[3]**2+masses[2]**2-p3[0]**2)
+
+    aa = sym.solve([p4x + p5x + pgx, p4y + p5y + pgy, p4x ** 2 + p4y ** 2 + p4z ** 2 + masses[1] ** 2 - E_4 ** 2,
+                    p5x ** 2 + p5y ** 2 + p5z ** 2 + masses[2] ** 2 - E_5 ** 2], [p4x, p4y, p5x, p5y])
+    print(aa[0])
+    print(p2[1],p2[2],p3[1],p3[2])
+    # print(aa[0][1] + aa[0][3] + pgy)
     # print(p_1+p_2+p_3)
     # print(p_2+p_3)
     #Let's briefly recap this:
@@ -275,7 +304,7 @@ def two_three_phase_space_dot(s_sqrt,masses):
 # print(p3)
 #Not enough randomness generated. Further review scheduled.
 # for i in range(10000):
-# event = two_three_phase_space_dot(s_sqrt=500, masses=[0, 0, 0])
+event = two_three_phase_space_dot(s_sqrt=500, masses=[0, 0, 0])
 # print(event.get_vector())
 #     cut(event)
 #This function extracts what is necessary from the final state particle momentums.
