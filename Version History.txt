@@ -1,3 +1,7 @@
+0.7
+--various bug fixes.
+--The rotation part is now carefully checked and should work as expected.
+
 0.6
 --can now handle gamma matrices.
 --can now handle generaal Lorentz Object contracition
