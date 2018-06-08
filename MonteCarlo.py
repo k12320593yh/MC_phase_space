@@ -253,7 +253,6 @@ def two_three_phase_space_dot(s_sqrt,masses):
     p_2.lorentz_transformation_off_matrix(random_phi_theta_rot_0)
     p_3.lorentz_transformation_off_matrix(random_phi_theta_rot_0)
 
-
     p4x = sym.Symbol('p4x')
     p4y = sym.Symbol('p4y')
     p5x = sym.Symbol('p5x')
@@ -262,32 +261,50 @@ def two_three_phase_space_dot(s_sqrt,masses):
     pgx = p_1.get_4_vector()[1]
     pgy = p_1.get_4_vector()[2]
     p4z = p_2.get_4_vector()[3]
-    E_4 = p_2.e
-    E_5 = p_3.e
+    E_4 = p_2.get_4_vector()[0]
+    E_5 = p_3.get_4_vector()[0]
     p5z = p_3.get_4_vector()[3]
     p1 = p_1.get_4_vector()
     p2 = p_2.get_4_vector()
     p3 = p_3.get_4_vector()
     # print(p_2.get_on_shell_ness())
     # print(p_3.get_on_shell_ness())
-    print(p1[1]+p2[1]+p3[1])
-    print(p1[2]+p2[2]+p3[2])
-    print(p2[1]**2+p2[2]**2+p2[3]**2+masses[1]**2-p2[0]**2)
-    print(p3[1]**2+p3[2]**2+p3[3]**2+masses[2]**2-p3[0]**2)
+    # print(p1[1]+p2[1]+p3[1])
+    # print(p1[2]+p2[2]+p3[2])
+    # print(p2[1]**2+p2[2]**2+p2[3]**2+masses[1]**2-p2[0]**2)
+    # print(p3[1]**2+p3[2]**2+p3[3]**2+masses[2]**2-p3[0]**2)
 
     aa = sym.solve([p4x + p5x + pgx, p4y + p5y + pgy, p4x ** 2 + p4y ** 2 + p4z ** 2 + masses[1] ** 2 - E_4 ** 2,
                     p5x ** 2 + p5y ** 2 + p5z ** 2 + masses[2] ** 2 - E_5 ** 2], [p4x, p4y, p5x, p5y])
-    print(aa[0])
-    print(p2[1],p2[2],p3[1],p3[2])
+    p_2p = lt.Lorentz4vector(components=[E_4,aa[0][0],aa[0][1],p4z],mass=masses[1])
+    p_3p = lt.Lorentz4vector(components=[E_5,aa[0][2],aa[0][3],p5z],mass=masses[2])
+    print(p_1+p_2+p_3)
+    print(p_1+p_2p+p_3p)
+    print(p_2p.get_on_shell_ness())
+    print(p_3p.get_on_shell_ness())
+    # print(aa[0])
+    # print(p2[1],p2[2],p3[1],p3[2])
+    #
+    # print(p2[1]+p3[1]+pgx)
+    # print(aa[0][0]+aa[0][2]+pgx)
+    # print(p2[2]+p3[2]+pgy)
+    # print(aa[0][1]+aa[0][3]+pgy)
+    # print(aa[0][0]**2+aa[0][1]**2+p4z**2-E_4**2+masses[1]**2)
+    # print(p2[1]**2+p2[2]**2+p2[3]**2-E_4**2+masses[1]**2)
+    # print(aa[0][2]**2+aa[0][3]**2+p5z**2-E_5**2+masses[2]**2)
+    # print(p3[1]**2+p3[2]**2+p3[3]**2-E_5**2+masses[2]**2)
+    # return (aa[0][0]-p2[1])
     # print(aa[0][1] + aa[0][3] + pgy)
     # print(p_1+p_2+p_3)
     # print(p_2+p_3)
     #Let's briefly recap this:
     #Generate a 1->2 decay event invovling a stationary particle with four momentum (sqrt(s),0,0,0), final state particle
     #and a virtual
-    weight = 1/((4*np.pi)**5*(s_sqrt/2)**2*p_1.e*p_2.e*p_3.e)
-    return Event(vectors=np.array([p_1.get_4_vector(),p_2.get_4_vector(),p_3.get_4_vector()]),
-                 weight=weight,final_state_particles=3,masses=masses,raw_dot=raw_dot)
+    # After the Energy bug was fixed, the equation-solving based algorithm seems to work in some circumstaces.
+    # However, not in every case.
+    # weight = 1/((4*np.pi)**5*(s_sqrt/2)**2*p_1.e*p_2.e*p_3.e)
+    # return Event(vectors=np.array([p_1.get_4_vector(),p_2.get_4_vector(),p_3.get_4_vector()]),
+    #              weight=weight,final_state_particles=3,masses=masses,raw_dot=raw_dot)
 
 # #
 # p1 = np.zeros(4, )
@@ -303,8 +320,16 @@ def two_three_phase_space_dot(s_sqrt,masses):
 # print(p2)
 # print(p3)
 #Not enough randomness generated. Further review scheduled.
-# for i in range(10000):
-event = two_three_phase_space_dot(s_sqrt=500, masses=[0, 0, 0])
+# T = 0
+# F = 0
+for i in range(100):
+    result = two_three_phase_space_dot(s_sqrt=500, masses=[0, 5, 5])
+    # if result<1e-6:
+    #     T+=1
+    # else:
+    #     F+=1
+# print(T)
+# print(F)
 # print(event.get_vector())
 #     cut(event)
 #This function extracts what is necessary from the final state particle momentums.
@@ -322,6 +347,9 @@ class Amplitude(object):
         self.function = function
         self.dimension = dimension
 
+#Generate dots with
+def dot_gen_dull():
+    pass
 
 def phase_space_integration(function,masses,number_of_dots=100,s_sqrt=500,dimension=2):
     summ = 0
@@ -329,7 +357,7 @@ def phase_space_integration(function,masses,number_of_dots=100,s_sqrt=500,dimens
     # count = 0
     momentum = lt.Lorentz4vector(components=[s_sqrt,0,0,0],name='decaying mediator',mass=s_sqrt)
     M_square = Amplitude(function=function,dimension=dimension)
-    abnornal_dots = []
+    abnormal_dots = []
     if dimension == 3:
         i = 0
         while i <= number_of_dots:
