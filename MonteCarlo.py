@@ -3,6 +3,7 @@ import inspect as insp
 import Lorentz_Transformation as lt
 import scipy.linalg as sp
 import sympy as sym
+import time
 # np.random.seed(7)
 def test_function_0(r,t,p):
     return (r**2)*np.sin(t)
@@ -123,7 +124,7 @@ def cut(event):
     z_vector = lt.Lorentz4vector(components=[1,0,0,1],mass=0)
     # p3 will be taken as the momentum of the photon.
     # Reject photons that are too soft, which might lead to real emission singularity.
-    if p3.e <= 10:
+    if p3.get_4_vector()[0] <= 10:
         # print("Photon to soft")
         return False
     # Reject photons too close to the beam.
@@ -131,7 +132,7 @@ def cut(event):
         # print("Photon collinear")
         return False
 
-    if (p1.e<10 or np.abs(lt.cos_theta(p1,z_vector))>0.9848)&(p2.e<10 or np.abs(lt.cos_theta(p2,z_vector))>0.9848):
+    if (p1.get_4_vector()[0]<10 or np.abs(lt.cos_theta(p1,z_vector))>0.9848)&(p2.get_4_vector()[0]<10 or np.abs(lt.cos_theta(p2,z_vector))>0.9848):
         return True
     else:
         return False
@@ -189,7 +190,7 @@ def two_three_phase_space_dot(s_sqrt,masses):
                                          components=momentum.get_4_vector() - p_1.get_4_vector(),
                                          mass=mediate_virtual_particle_mass)
     # p_1_z = lt.Lorentz4vector(components=p_1.get_4_vector(),mass=p_1.get_mass())
-    p_mediator_duplicate = lt.Lorentz4vector(name='mediator particle',
+    p_mediator_duplicate =    lt.Lorentz4vector(name='mediator particle',
                                              components=momentum.get_4_vector()-p_1.get_4_vector(),
                                              mass=mediate_virtual_particle_mass)
     p_mediator.lorentz_transformation_off_matrix(random_phi_theta_rot_0)
@@ -253,35 +254,35 @@ def two_three_phase_space_dot(s_sqrt,masses):
     p_2.lorentz_transformation_off_matrix(random_phi_theta_rot_0)
     p_3.lorentz_transformation_off_matrix(random_phi_theta_rot_0)
 
-    p4x = sym.Symbol('p4x')
-    p4y = sym.Symbol('p4y')
-    p5x = sym.Symbol('p5x')
-    p5y = sym.Symbol('p5y')
-
-    pgx = p_1.get_4_vector()[1]
-    pgy = p_1.get_4_vector()[2]
-    p4z = p_2.get_4_vector()[3]
-    E_4 = p_2.get_4_vector()[0]
-    E_5 = p_3.get_4_vector()[0]
-    p5z = p_3.get_4_vector()[3]
-    p1 = p_1.get_4_vector()
-    p2 = p_2.get_4_vector()
-    p3 = p_3.get_4_vector()
-    # print(p_2.get_on_shell_ness())
-    # print(p_3.get_on_shell_ness())
-    # print(p1[1]+p2[1]+p3[1])
-    # print(p1[2]+p2[2]+p3[2])
-    # print(p2[1]**2+p2[2]**2+p2[3]**2+masses[1]**2-p2[0]**2)
-    # print(p3[1]**2+p3[2]**2+p3[3]**2+masses[2]**2-p3[0]**2)
-
-    aa = sym.solve([p4x + p5x + pgx, p4y + p5y + pgy, p4x ** 2 + p4y ** 2 + p4z ** 2 + masses[1] ** 2 - E_4 ** 2,
-                    p5x ** 2 + p5y ** 2 + p5z ** 2 + masses[2] ** 2 - E_5 ** 2], [p4x, p4y, p5x, p5y])
-    p_2p = lt.Lorentz4vector(components=[E_4,aa[0][0],aa[0][1],p4z],mass=masses[1])
-    p_3p = lt.Lorentz4vector(components=[E_5,aa[0][2],aa[0][3],p5z],mass=masses[2])
-    print(p_1+p_2+p_3)
-    print(p_1+p_2p+p_3p)
-    print(p_2p.get_on_shell_ness())
-    print(p_3p.get_on_shell_ness())
+    # p4x = sym.Symbol('p4x')
+    # p4y = sym.Symbol('p4y')
+    # p5x = sym.Symbol('p5x')
+    # p5y = sym.Symbol('p5y')
+    #
+    # pgx = p_1.get_4_vector()[1]
+    # pgy = p_1.get_4_vector()[2]
+    # p4z = p_2.get_4_vector()[3]
+    # E_4 = p_2.get_4_vector()[0]
+    # E_5 = p_3.get_4_vector()[0]
+    # p5z = p_3.get_4_vector()[3]
+    # p1 = p_1.get_4_vector()
+    # p2 = p_2.get_4_vector()
+    # p3 = p_3.get_4_vector()
+    # # print(p_2.get_on_shell_ness())
+    # # print(p_3.get_on_shell_ness())
+    # # print(p1[1]+p2[1]+p3[1])
+    # # print(p1[2]+p2[2]+p3[2])
+    # # print(p2[1]**2+p2[2]**2+p2[3]**2+masses[1]**2-p2[0]**2)
+    # # print(p3[1]**2+p3[2]**2+p3[3]**2+masses[2]**2-p3[0]**2)
+    #
+    # aa = sym.solve([p4x + p5x + pgx, p4y + p5y + pgy, p4x ** 2 + p4y ** 2 + p4z ** 2 + masses[1] ** 2 - E_4 ** 2,
+    #                 p5x ** 2 + p5y ** 2 + p5z ** 2 + masses[2] ** 2 - E_5 ** 2], [p4x, p4y, p5x, p5y])
+    # p_2p = lt.Lorentz4vector(components=[E_4,aa[0][0],aa[0][1],p4z],mass=masses[1])
+    # p_3p = lt.Lorentz4vector(components=[E_5,aa[0][2],aa[0][3],p5z],mass=masses[2])
+    # print(p_1+p_2+p_3)
+    # print(p_1+p_2p+p_3p)
+    # print(p_2p.get_on_shell_ness())
+    # print(p_3p.get_on_shell_ness())
     # print(aa[0])
     # print(p2[1],p2[2],p3[1],p3[2])
     #
@@ -302,9 +303,9 @@ def two_three_phase_space_dot(s_sqrt,masses):
     #and a virtual
     # After the Energy bug was fixed, the equation-solving based algorithm seems to work in some circumstaces.
     # However, not in every case.
-    # weight = 1/((4*np.pi)**5*(s_sqrt/2)**2*p_1.e*p_2.e*p_3.e)
-    # return Event(vectors=np.array([p_1.get_4_vector(),p_2.get_4_vector(),p_3.get_4_vector()]),
-    #              weight=weight,final_state_particles=3,masses=masses,raw_dot=raw_dot)
+    weight = 1/((4*np.pi)**5*(s_sqrt/2)**2*p_1.e*p_2.e*p_3.e)
+    return Event(vectors=np.array([p_1.get_4_vector(),p_2.get_4_vector(),p_3.get_4_vector()]),
+                 weight=weight,final_state_particles=3,masses=masses,raw_dot=raw_dot)
 
 # #
 # p1 = np.zeros(4, )
@@ -385,5 +386,20 @@ def phase_space_integration(function,masses,number_of_dots=100,s_sqrt=500,dimens
     print(summ)
     return summ/number_of_dots
 
+def unit_func():
+    return 1
+start = time.clock()
+cnt = 0
+array = np.zeros(4,)
+while cnt < 100000:
+    event = two_three_phase_space_dot(s_sqrt=500,masses=[0,0.005,0.005])
+    if cut(event):
+        cnt+=1
+        array = np.vstack((array,event.get_vector()))
+        # print(cnt)
+np.save("100000_1",array)
+# end = time.clock()
+
+# print(end-start)
 
 #see if the processes is allowed by 4-momen
