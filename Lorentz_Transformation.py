@@ -1,6 +1,7 @@
 import numpy as np
 import LorentzGenerators as lg
 import scipy.linalg as sp
+import sympy as sym
 
 #Is it possible to define Lorentz Objects as ndarray's subclass?
 
@@ -198,11 +199,11 @@ def contractgamma(tensor1, tensor2):
 
 
 class Lorentz4vector(LorentzObject):
-    def __init__(self,components,mass = None,name = 'nothing',index = 'a',cases = [True]):
-        LorentzObject.__init__(self,indices=index,components=components,cases=cases)
+    def __init__(self,components,mass = None,name = 'nothing',index = 'a',cases = True):
+        LorentzObject.__init__(self,indices=index,components=components,cases=[cases])
         self.__name = name
 #4-vector components
-        self.components = np.float64(components)
+        self.components = np.array(components)
         self.index_name = index
 #Particle mass. if you would like to operator at high energy limit, just set this to zero.
 #If mass is not given, code will calculate it for you.
@@ -399,6 +400,12 @@ def four_vector_contraction_component(l4v1,l4v2):
     return l4v1[0]*l4v2[0]-np.sum(l4v1[i]*l4v2[i] for i in range(1,4))
 
 
+def three_vector_gen_off_t_p(p,theta,phi):
+    return [np.sin(theta)*np.cos(phi)*p,np.sin(theta)*np.sin(phi)*p,np.cos(theta)*p]
+
+
+
+
 def fcc(l4v1,l4v2):
     return l4v1[0] * l4v2[0] - np.sum(l4v1[i] * l4v2[i] for i in range(1, 4))
 
@@ -545,3 +552,14 @@ def gamma_matrices_trace_generator(gamma):
 
 # p1 = Lorentz4vector(components=[1,0,0,1])
 # p2 = Lorentz4vector(components=[2,0,0,1])
+
+# F = 0
+# for i in range(10000):
+#     dots = np.random.rand(2,)
+#     dots[0] *= np.pi
+#     dots[1] *= 2*np.pi
+#     ap = three_vector_gen_off_t_p(1,dots[0],dots[1])
+#     a = Lorentz4vector(components=[1]+ap,mass=0)
+#     if cos_theta(a,[1,0,0,1]) - np.cos(dots[0]) > 1e-6:
+#         F += 1
+# print(F)

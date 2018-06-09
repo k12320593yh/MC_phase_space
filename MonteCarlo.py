@@ -321,9 +321,9 @@ def two_three_phase_space_dot(s_sqrt,masses):
 # print(p3)
 #Not enough randomness generated. Further review scheduled.
 # T = 0
-# F = 0
-for i in range(100):
-    result = two_three_phase_space_dot(s_sqrt=500, masses=[0, 5, 5])
+# # F = 0
+# for i in range(100):
+#     result = two_three_phase_space_dot(s_sqrt=500, masses=[0, 5, 5])
     # if result<1e-6:
     #     T+=1
     # else:
@@ -348,8 +348,6 @@ class Amplitude(object):
         self.dimension = dimension
 
 #Generate dots with
-def dot_gen_dull():
-    pass
 
 def phase_space_integration(function,masses,number_of_dots=100,s_sqrt=500,dimension=2):
     summ = 0

@@ -5,7 +5,58 @@ import Lorentz_Transformation as lt
 # np.random.seed(42)
 
 # def rest_component_finder(E1,E2,E3,p1x,p1y,p1z,p2z):
+def phase_space_dot_23_nt_massless(s_sqrt):
+    raw_dot = np.random.rand(5,)
+    E_gamma = (s_sqrt/2)*raw_dot[0]
+    E_1 = raw_dot[3]*E_gamma+((s_sqrt/2)-E_gamma)
+    E_2 = s_sqrt-E_1-E_gamma
+    theta_g = np.pi*raw_dot[1]
+    phi_g = 2*np.pi*raw_dot[2]
+    theta_1 = np.pi*raw_dot[4]
+    p3_g = lt.three_vector_gen_off_t_p(E_gamma,theta_g,phi_g)
+    p_g = lt.Lorentz4vector(components=[E_gamma]+p3_g)
+    pg = p_g.get_4_vector()
+    p1z = E_1*np.cos(theta_1)
+    p2z = -p3_g[-1]-p1z
 
+    ####################
+    # Energy generating algorithm validation. Positive result confirmed.
+    # flag = True
+    # if E_1+E_2<=E_gamma or abs(E_1)-E_2>=E_gamma or E_1+E_gamma<=E_2 or abs(E_1-E_gamma) >= E_2 or E_2 + E_gamma <= E_1 or abs(E_2 - E_gamma) >= E_1:
+    #     flag = False
+    # return flag
+    #######################
+    p1x = sym.Symbol('p1x')
+    p1y = sym.Symbol('p1y')
+    p2x = sym.Symbol('p2x')
+    p2y = sym.Symbol('p2y')
+    # p5theta = sym.Symbol('p5theta')
+    # E_5 = sym.Symbol('E_5')
+    #
+    aa = sym.solve([p1x+p2x+pg[1],p1y+p2y+pg[2],p1x**2+p1y**2+p1z**2-E_1**2,p2x**2+p2y**2+p2z**2-E_2**2],[p1x,p1y,p2x,p2y])
+    # print(E_gamma+E_1+E_2-s_sqrt)
+    print(aa)
+    aa = np.float64(aa)
+    print(type(aa[0][0]))
+    print([E_1,aa[0][0],aa[0][1],p1z])
+    p1 = lt.Lorentz4vector(components=np.array([E_1,aa[0][0],aa[0][1],p1z]),mass=0)
+    p2 = lt.Lorentz4vector(components=np.array([E_2,aa[0][2],aa[0][3],p2z]),mass=0)
+    print(p1+p2+pg)
+    print(p1.get_on_shell_ness())
+    print(p2.get_on_shell_ness())
+    # aa = sym.solve([p5norm*sym.cos(p5theta)+p4z+pgz],[p5theta])
+    # aa = sym.solve([])
+
+    # pg = lt.Lorentz4vector(components=[E_gamma,E_gamma*(np.sin())])
+
+phase_space_dot_23_nt_massless(500)
+
+# print(phase_space_dot_23_nt_massless(1))
+# F = 0
+# for i in range(10000):
+#     if not phase_space_dot_23_nt_massless(1):
+#         F += 1
+# print(F)
 def phase_space_dot_23_nt(s_sqrt,masses):
     raw_dot = np.random.rand(5,)
     mv = raw_dot[0]*(s_sqrt-np.sum(masses))+np.sum(masses[1:])
@@ -55,7 +106,7 @@ def phase_space_dot_23_nt(s_sqrt,masses):
 #     E2 += event[1]
 #     E3 += event[2]
 # print(E1,E2,E3)
-phase_space_dot_23_nt(s_sqrt=100,masses=[0,0,0])
+# phase_space_dot_23_nt(s_sqrt=100,masses=[0,0,0])
 #####
 # It's a nice approach to generate photon energy using chain decay idea.
 # However in this case all we need is E_gamma.
