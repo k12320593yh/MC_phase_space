@@ -366,7 +366,7 @@ def phase_space_integration(function,masses,number_of_dots=100,s_sqrt=500,dimens
             if cut(phase_space_dot):
                 a = M_square.function(vectors=phase_space_dot.get_vector(),
                                       masses=masses)
-                summ += a[0]*phase_space_dot.get_weight()
+                summ += a*phase_space_dot.get_weight()
                 total_space += phase_space_dot.get_weight()
                 i += 1
                 print(i)
@@ -386,19 +386,19 @@ def phase_space_integration(function,masses,number_of_dots=100,s_sqrt=500,dimens
     print(summ)
     return summ/number_of_dots
 
-def unit_func():
-    return 1
-start = time.clock()
-cnt = 0
-array = np.zeros(4,)
-while cnt < 10000:
-    event = two_three_phase_space_dot(s_sqrt=500,masses=[0,0,0])
-    if cut(event):
-        cnt+=1
-        array = np.vstack((array,event.get_vector()))
-        # print(cnt)
-np.save("100000_eenunua",array)
-# end = time.clock()
+# def unit_func():
+#     return 1
+# start = time.clock()
+# cnt = 0
+# array = np.zeros(4,)
+# while cnt < 10000:
+#     event = two_three_phase_space_dot(s_sqrt=500,masses=[0,0,0])
+#     if cut(event):
+#         cnt+=1
+#         array = np.vstack((array,event.get_vector()))
+#         # print(cnt)
+# np.save("100000_eenunua",array)
+# # end = time.clock()
 
 # print(end-start)
 
