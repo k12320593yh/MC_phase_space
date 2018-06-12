@@ -391,13 +391,13 @@ def unit_func():
 start = time.clock()
 cnt = 0
 array = np.zeros(4,)
-while cnt < 100000:
-    event = two_three_phase_space_dot(s_sqrt=500,masses=[0,0.005,0.005])
+while cnt < 10000:
+    event = two_three_phase_space_dot(s_sqrt=500,masses=[0,0,0])
     if cut(event):
         cnt+=1
         array = np.vstack((array,event.get_vector()))
         # print(cnt)
-np.save("100000_1",array)
+np.save("100000_eenunua",array)
 # end = time.clock()
 
 # print(end-start)
