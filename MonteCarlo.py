@@ -303,7 +303,7 @@ def two_three_phase_space_dot(s_sqrt,masses):
     #and a virtual
     # After the Energy bug was fixed, the equation-solving based algorithm seems to work in some circumstaces.
     # However, not in every case.
-    weight = 1/((4*np.pi)**5*(s_sqrt/2)**2*p_1.e*p_2.e*p_3.e)
+    weight = 1/((4*np.pi)**5*(s_sqrt/2)**2*p_1.get_4_vector()[0]*p_2.get_4_vector()[0]*p_3.get_4_vector()[0])
     return Event(vectors=np.array([p_1.get_4_vector(),p_2.get_4_vector(),p_3.get_4_vector()]),
                  weight=weight,final_state_particles=3,masses=masses,raw_dot=raw_dot)
 
@@ -349,13 +349,82 @@ class Amplitude(object):
         self.dimension = dimension
 
 #Generate dots with
+def phase_space_dot_23_nt(s_sqrt,masses):
+    raw_dot = np.random.rand(5,)
+    mv = raw_dot[0]*(s_sqrt-np.sum(masses))+np.sum(masses[1:])
+    E_gamma = (s_sqrt**2-mv**2)/(2*s_sqrt)
+    # E_4 = raw_dot[3]*(s_sqrt-E_gamma-np.sum(masses[1:]))+np.sum(masses[2:])
+    # p4norm = np.sqrt(E_4**2-masses[1]**2)
+    # E_5 = s_sqrt-E_4-E_gamma
+    # p5norm = np.sqrt(E_5**2-masses[2]**2)
+    theta_g = np.pi*raw_dot[1]
+    phi_g = 2*np.pi*raw_dot[2]
+    theta_4 = np.pi*raw_dot[4]
+    pgx = np.sin(theta_g)*np.cos(phi_g)*E_gamma
+    pgy = np.sin(theta_g)*np.sin(phi_g)*E_gamma
+    pgz = np.cos(theta_g)*E_gamma
+    # pg = lt.Lorentz4vector(components=[E_gamma,pgx,pgy,pgz],mass=0)
+    # print(pg.get_on_shell_ness())
+    # print(E_gamma)
+    # print(E_4)
+    # print(E_5)
+    #All four components of pg is now generated.
 
-def phase_space_integration(function,masses,number_of_dots=100,s_sqrt=500,dimension=2):
+    # p4z = np.cos(theta_4)*p4norm
+    # p5z = -p4z-pgz
+
+    # For p4 and p5, two of all four components is known.
+    # All we have to do is to solve the 4 remaining components using four momentum conservation.
+
+    p4x = sym.Symbol('p4x')
+    p4y = sym.Symbol('p4y')
+    p5x = sym.Symbol('p5x')
+    p5y = sym.Symbol('p5y')
+    p5theta = sym.Symbol('p5theta')
+    # E_5 = sym.Symbol('E_5')
+    #
+    # aa = sym.solve([p4x+p5x+pgx,p4y+p5y+pgy,p4x**2+p4y**2+p4z**2+masses[1]**2-E_4**2,p5x**2+p5y**2+p5z**2+masses[2]**2-E_5**2],[p4x,p4y,p5x,p5y])
+    # aa = sym.solve([p5norm*sym.cos(p5theta)+p4z+pgz],[p5theta])
+    aa = sym.solve([])
+    #This solves a full set of 4-variable quadratic euqations and drags the entire program significantly.
+    print(aa)
+
+
+# An attempt to generate dots within
+def phase_space_dot_23_nt_cut_massless(s_sqrt):
+    raw_dot = np.random.rand(5,)
+    E_gamma = raw_dot[0]*((s_sqrt/2)-10)+10
+    cos_theta_gamma = -0.984+2*raw_dot[1]*0.984
+    phi = 2*np.pi*raw_dot[2]
+    # Generate photons hard enough.
+    # Fatal failure. After the energies are determined, the angles are no longer totally free, but heavily restricted.
+
+
+
+def phase_space_integration(function,masses,number_of_dots=100,s_sqrt=500,dimension=2,mode=0):
     summ = 0
     total_space = 0
+    M_square = Amplitude(function=function,dimension=dimension)
+
+    if mode == 1:
+        #load already generated phase space dots into python instead of generating new.
+        vectors = np.load('1000000_eenunua.npy')[1:]
+        for i in range(number_of_dots):
+            j = np.random.randint(0,10000,1)[0]
+            phase_space_dot = Event(vectors=vectors[3*j:3*j+3],
+                                    weight=1/((4*np.pi)**5*(s_sqrt/2)**2*vectors[3*j][0]*vectors[3*j+1][0]*
+                                              vectors[3*j+2][0]),
+                                    masses=[0,0,0],raw_dot=[0,0,0,0,0],final_state_particles=3)
+            a = M_square.function(vectors=phase_space_dot.get_vector(),
+                                  masses=masses)
+            summ += a * phase_space_dot.get_weight()
+            total_space += phase_space_dot.get_weight()
+        return summ/number_of_dots
+            # i += 1
+            # print(i)
+
     # count = 0
     momentum = lt.Lorentz4vector(components=[s_sqrt,0,0,0],name='decaying mediator',mass=s_sqrt)
-    M_square = Amplitude(function=function,dimension=dimension)
     abnormal_dots = []
     if dimension == 3:
         i = 0
@@ -385,21 +454,26 @@ def phase_space_integration(function,masses,number_of_dots=100,s_sqrt=500,dimens
             # count+=1
     print(summ)
     return summ/number_of_dots
-
+#
+# x = np.load("1000000_eenunua.npy")[1:]
+# print(x.shape)
+# for i in range(100):
+#     y = lt.Lorentz4vector(components=x[i],mass=0)
+#     print(y.get_on_shell_ness())
 # def unit_func():
 #     return 1
 # start = time.clock()
 # cnt = 0
 # array = np.zeros(4,)
-# while cnt < 10000:
+# while cnt < 100000:
 #     event = two_three_phase_space_dot(s_sqrt=500,masses=[0,0,0])
 #     if cut(event):
 #         cnt+=1
 #         array = np.vstack((array,event.get_vector()))
 #         # print(cnt)
 # np.save("100000_eenunua",array)
-# # end = time.clock()
-
+# end = time.clock()
+#
 # print(end-start)
 
 #see if the processes is allowed by 4-momen

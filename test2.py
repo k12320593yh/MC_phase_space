@@ -39,4 +39,4 @@ test_decay0.lorentz_transformation_off_matrix(mat)
 # print(angles)
 
 
-# print("Running time : %f CPU seconds" % (end_CPU - start_CPU))
+# print("Running ti me : %f CPU seconds" % (end_CPU - start_CPU))
