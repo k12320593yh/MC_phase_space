@@ -118,6 +118,7 @@ def two_two_phase_space_dot(s_sqrt,masses):
 
 #Cut mechanism. Returns a boolean value.
 def cut(event):
+    return True
     p1 = lt.Lorentz4vector(event.get_vector()[0],mass=event.get_mass()[0])
     p2 = lt.Lorentz4vector(event.get_vector()[1],mass=event.get_mass()[1])
     p3 = lt.Lorentz4vector(event.get_vector()[2],mass=event.get_mass()[2])
@@ -201,7 +202,7 @@ def two_three_phase_space_dot(s_sqrt,masses):
 
     # print(p_mediator.components[0])
     # print(p_mediator.get_4_vector())
-    # p_1.sh(message='p_1 before rotation 0')
+    # p_1.sh(message='test8p_1 before rotation 0')
     p_1.lorentz_transformation_off_matrix(random_phi_theta_rot_0)
     # print("p_1 after rotation: " + str(p_1.get_4_vector()))
     # print(p_1.get_4_vector()+p_mediator.get_4_vector())
@@ -311,7 +312,7 @@ def two_three_phase_space_dot(s_sqrt,masses):
 # p1 = np.zeros(4, )
 # p2 = np.zeros(4, )
 # p3 = np.zeros(4, )
-# for i in range(10000):
+# for i in range(500):
 #     a = two_three_phase_space_dot(s_sqrt=500,masses=[0,0,0]).get_vector()
 #     p1 += a[0]
 #     p2 += a[1]
@@ -322,13 +323,13 @@ def two_three_phase_space_dot(s_sqrt,masses):
 # print(p3)
 #Not enough randomness generated. Further review scheduled.
 # T = 0
-# # F = 0
+# F = 0
 # for i in range(100):
 #     result = two_three_phase_space_dot(s_sqrt=500, masses=[0, 5, 5])
-    # if result<1e-6:
-    #     T+=1
-    # else:
-    #     F+=1
+#     if result<1e-6:
+#         T+=1
+#     else:
+#         F+=1
 # print(T)
 # print(F)
 # print(event.get_vector())
@@ -391,15 +392,64 @@ def phase_space_dot_23_nt(s_sqrt,masses):
 
 
 # An attempt to generate dots within
-def phase_space_dot_23_nt_cut_massless(s_sqrt):
-    raw_dot = np.random.rand(5,)
-    E_gamma = raw_dot[0]*((s_sqrt/2)-10)+10
-    cos_theta_gamma = -0.984+2*raw_dot[1]*0.984
-    phi = 2*np.pi*raw_dot[2]
+# def phase_space_dot_23_nt_cut_massless(s_sqrt):
+#     raw_dot = np.random.rand(5,)
+#     E_gamma = raw_dot[0]*((s_sqrt/2)-10)+10
+#     cos_theta_gamma = -0.984+2*raw_dot[1]*0.984
+#     phi = 2*np.pi*raw_dot[2]
     # Generate photons hard enough.
     # Fatal failure. After the energies are determined, the angles are no longer totally free, but heavily restricted.
 
 
+def phase_space_23_dot_nt2_massless_cut(s_sqrt):
+    while 1:
+        raw_dot = np.random.rand(5, )
+        p_1 = [s_sqrt / 2, 0, 0, s_sqrt / 2]
+        p_2 = [s_sqrt / 2, 0, 0, -s_sqrt / 2]
+        mv =  np.sqrt((s_sqrt**2-20*s_sqrt))*raw_dot[0]
+        # energy of final state photon. Must be > 10 GeV to avoid soft photon singularity and be seen by detectors.
+        e_1 = (s_sqrt ** 2 - mv ** 2) / (2 * s_sqrt)
+        e_2 = e_1 * raw_dot[1] + s_sqrt / 2 - e_1
+        e_3 = s_sqrt-e_1-e_2
+        # return [e_1,e_2,s_sqrt-e_1-e_2]
+        phi_1 = 2 * np.pi * raw_dot[2]
+        phi_12 = 2 * np.pi * raw_dot[3]
+        cos_theta1 = -0.984 + 2 * raw_dot[4]*0.984
+        #photon angle cut.
+        sin_theta1 = np.sin(np.arccos(cos_theta1))
+        cos_theta12 = ((s_sqrt - e_1 - e_2) ** 2 - e_1 ** 2 - e_2 ** 2) / (2 * e_1 * e_2)
+        cos_theta2 = cos_theta1 * cos_theta12 + sin_theta1 * np.sqrt(1 - cos_theta12 ** 2) * np.cos(phi_12)
+        if np.abs(cos_theta2)<0.984:
+            continue
+        sin_theta2 = np.sin(np.arccos(cos_theta2))
+        phi_2 = phi_1 - np.arccos((cos_theta12 - cos_theta2 * cos_theta1) / (sin_theta1 * sin_theta2))
+        if e_3 > 10 and np.abs((e_1*cos_theta1+e_2*cos_theta2)/e_3)<0.984:
+            continue
+        k1 = e_1 * np.array([1, sin_theta1 * np.cos(phi_1), sin_theta1 * np.sin(phi_1), cos_theta1])
+        k2 = e_2 * np.array([1, sin_theta1 * np.cos(phi_2), sin_theta2 * np.sin(phi_2), cos_theta2])
+        k3 = np.array([s_sqrt, 0, 0, 0]) - k1 - k2
+        # if np.random.randint(1,):
+        #     k2,k3 = k3,k2
+
+        weight = 1 / (8*(2*np.pi**5)*s_sqrt)
+        return Event(vectors=np.array([k1,k2,k3]),
+                     weight=weight, final_state_particles=3, masses=[0,0,0], raw_dot=raw_dot)
+
+# start = time.time()
+# a = np.zeros(4,)
+# b = np.zeros(4,)
+# d = np.zeros(4,)
+# for i in range(100):
+#     c = phase_space_23_dot_nt2_massless_cut(500)
+#     a += c[0]
+#     b += c[1]
+#     d += c[2]
+# end = time.time()
+# print(start-end)
+# #roughly 200 events/s with cut. Far better than before!
+# print(a/100)
+# print(b/100)
+# print(d/100)
 
 def phase_space_integration(function,masses,number_of_dots=100,s_sqrt=500,dimension=2,mode=0):
     summ = 0
@@ -430,7 +480,7 @@ def phase_space_integration(function,masses,number_of_dots=100,s_sqrt=500,dimens
         i = 0
         while i <= number_of_dots:
             # print("#######")
-            phase_space_dot = two_three_phase_space_dot(s_sqrt=s_sqrt, masses=masses)
+            phase_space_dot = phase_space_23_dot_nt2_massless_cut(s_sqrt=s_sqrt)
             # print(phase_space_dot.get_vector()[2])
             if cut(phase_space_dot):
                 a = M_square.function(vectors=phase_space_dot.get_vector(),

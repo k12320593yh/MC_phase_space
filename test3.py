@@ -7,5 +7,6 @@ import numpy as np
 # b = a.reshape(3,3,3)
 # print(b)
 # print(b.ravel())
-c = np.random.randint(1,100,10)
-print(c[1:4])
+k1 = p2 = k2 = p1 = np.array([1,0,0,0])
+
+print(-16*lt.fcc((k1), (p2))*lt.fcc((k2), (p1)))

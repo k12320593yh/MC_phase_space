@@ -1,0 +1,1 @@
+-16*Pair[Momentum[k1], Momentum[p2]]*Pair[Momentum[k2], Momentum[p1]]
