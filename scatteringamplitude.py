@@ -193,7 +193,7 @@ def eemumu(vectors,masses=[0,0]):
 # print('!')
 # print('bb')
 # print(mc.phase_space_integration(eemumu,number_of_dots=10000,s_sqrt=500,masses=[0,0],dimension=2))
-print(mc.phase_space_integration(eenunugamma1,number_of_dots=100000,s_sqrt=500,masses=[0,0,0],dimension=3,mode=0))
+print(mc.phase_space_integration(eenunugamma1,number_of_dots=10000,s_sqrt=500,masses=[0,0,0],dimension=3,mode=0))
 # vv = np.array([[45.5287,-16.429,7.88978,-41.7217],[249.981,81.8115,-45.7054,231.751],[204.49,-65.3826,37.8156,-190.029]])
 # print(vv.shape)
 # print(eenunugamma1(vectors=vv,masses=[0,0,0]))
