@@ -62,6 +62,8 @@ def MCI_MD(function,bound,number_of_points=100000):
     return (summ/number_of_points)*np.product(lengths)
 
 
+# Primitive MC integrator. Acuraccy ~ 0.1% with 100000 dots.
+
 #encodes all the information necessary to describe an 2->3 event.
 #Generation of phase space dot
 #Takes three arguments:
